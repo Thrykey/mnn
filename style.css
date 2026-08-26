@@ -154,17 +154,20 @@ button:hover {
 
 .module-btn {
   background: transparent; 
-  border: 1px solid var(--term-fg); 
+  border: 2px solid var(--term-fg); /* Ujednolicona grubość na stałe 2px */
   color: var(--term-fg);
   text-align: center; 
   width: 100%;
-  flex: 1; 
+  flex: 1;
   margin: 0;
+  font-weight: bold; /* Zawsze pogrubione, żeby uniknąć skakania tekstu */
+  box-sizing: border-box; /* Utrzymuje ramkę wewnątrz wymiarów przycisku */
+  transition: all 0.1s ease-in-out; /* Płynne przejście */
 }
+
 .module-btn.active { 
   background: var(--term-dim); 
-  border: 2px solid var(--term-fg); 
-  font-weight: bold; 
+  box-shadow: inset 0 0 15px rgba(30, 231, 255, 0.3); /* Dodatkowa wewnętrzna poświata zamiast pogrubiania ramki */
 }
 .module-btn.completed { 
   border-color: var(--term-fg); 
