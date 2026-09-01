@@ -86,7 +86,13 @@ function loadGame(moduleKey) {
     }
 
     // Dynamiczne intruckje dla poszczególnych mini-gierek
-if (moduleKey === 'eng') {
+if (moduleKey === 'nav') {
+        instr.innerHTML = `<strong>CEL:</strong> Zaprogramuj trasę lotu.<br><br>
+        Wprowadź sekwencję komend napędowych (strzałek), aby ominąć przeszkody <strong>[X]</strong> i zadokować w bazie <strong>[B]</strong>.<br><br>
+        <em>Poziom 2: Zbierz klucz autoryzacyjny <strong>[K]</strong> przed dokowaniem.</em>`;
+        initNavigationGame(mod.currentStage, moduleKey, container);
+    }
+    else if (moduleKey === 'eng') {
         instr.innerHTML = `<strong>CEL:</strong> Zsynchronizuj rdzeń silnika.<br><br>
         Użyj suwaków, aby precyzyjnie nałożyć Twój sygnał na uszkodzony strumień mocy.`;
         initOscilloscopeGame(mod.currentStage, moduleKey, container);
@@ -101,13 +107,10 @@ if (moduleKey === 'eng') {
         Połącz ze sobą świecące węzły tego samego koloru, przeciągając po ekranie. Ścieżki danych <strong>nie mogą się przecinać</strong>, a każdy węzeł musi zostać podłączony do swojej pary.`;
         initTransmitterGame(moduleKey, container);
     }
-    else {
-        // Placeholder przycisków dla pozostałych gier
-        container.innerHTML = `<div style="text-align:center;">
-            <p>Tutaj wgramy gierkę: <strong>${mod.name}</strong></p>
-            <button onclick="winStage('${moduleKey}')">SYMULUJ WYGRANĄ POZIOMU</button>
-        </div>`;
-        instr.innerHTML = `Zbadaj interfejs na środku ekranu i przywróć system do działania.`;
+    else if (moduleKey === 'core') {
+        instr.innerHTML = `<strong>CEL:</strong> Zautoryzuj klastry pamięci.<br><br>
+        Cyfra wewnątrz sektora oznacza, <strong>ile z jej 4 narożników (węzłów)</strong> musi zostać zasilonych. <br><br>Klikaj w węzły na rogach, aby je aktywować. Kiedy wartość się zgadza, sektor zaświeci się na zielono.`;
+        initMemoryCoreGame(moduleKey, container);
     }
 }
 
@@ -571,4 +574,353 @@ function initTransmitterGame(moduleKey, container) {
             setTimeout(() => feedback.textContent = "", 2000);
         }
     });
+}
+
+// --- LOGIKA GRY: RDZEŃ PAMIĘCI (DOTS / KROPKI Z CYFRAMI) ---
+function initMemoryCoreGame(moduleKey, container) {
+    const cols = 4; 
+    const dotCols = cols + 1;
+    const totalDots = dotCols * dotCols;
+    const totalCells = cols * cols;
+    const cellSize = 60; 
+    const offset = 25; // Zwiększony lekko margines
+
+    // 1. Generujemy losowy, rozwiązywalny układ (ukryta prawda)
+    let secretPattern = Array(totalDots).fill(0).map(() => Math.random() > 0.5 ? 1 : 0);
+    
+    // 2. Obliczamy wartości dla 16 sektorów (Tym razem każda komórka ma cyfrę!)
+    let cellTargets = [];
+    for (let r = 0; r < cols; r++) {
+        for (let c = 0; c < cols; c++) {
+            let tl = r * dotCols + c;
+            let tr = tl + 1;
+            let bl = (r + 1) * dotCols + c;
+            let br = bl + 1;
+            
+            let sum = secretPattern[tl] + secretPattern[tr] + secretPattern[bl] + secretPattern[br];
+            cellTargets.push(sum);
+        }
+    }
+
+    let isLit = Array(totalDots).fill(false);
+
+    let html = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; user-select: none;">
+            
+            <div style="position: relative; margin-bottom: 30px; padding: ${offset}px; background: rgba(0,0,0,0.3); border-radius: 8px; box-shadow: inset 0 0 20px rgba(0,0,0,0.8);">
+                
+                <!-- Siatka Klastrów (Kwadraty z cyframi) -->
+                <div id="coreCellsGrid" style="display: grid; grid-template-columns: repeat(${cols}, ${cellSize}px); grid-template-rows: repeat(${cols}, ${cellSize}px); background: var(--term-bg); border: 2px solid var(--term-fg); box-shadow: 0 0 15px rgba(30,231,255,0.2); transition: all 0.3s ease;">
+    `;
+
+    // Generowanie HTML dla wszystkich sektorów z jawnymi cyframami
+    for(let i = 0; i < totalCells; i++) {
+        html += `<div class="core-cell" data-id="${i}" style="border: 1px solid rgba(30, 231, 255, 0.3); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold; color: var(--term-fg); transition: all 0.3s ease;">${cellTargets[i]}</div>`;
+    }
+
+    html += `</div>`; 
+
+    // Generowanie HTML dla Węzłów (Kropek)
+    for(let i = 0; i < totalDots; i++) {
+        let r = Math.floor(i / dotCols);
+        let c = i % dotCols;
+        let top = r * cellSize + offset - 12; 
+        let left = c * cellSize + offset - 12;
+        
+        html += `<div class="core-dot" data-id="${i}" style="position: absolute; top: ${top}px; left: ${left}px; width: 24px; height: 24px; background: var(--term-dim); border: 2px solid var(--term-fg); border-radius: 50%; cursor: pointer; z-index: 10; transition: all 0.2s ease;"></div>`;
+    }
+
+    html += `
+            </div>
+            <button id="checkCoreBtn" style="width: 280px; min-height: 55px;">ZAUTORYZUJ RDZEŃ</button>
+            <p id="coreFeedback" style="color: var(--danger); margin-top: 15px; height: 20px; font-weight: bold; text-align: center;"></p>
+        </div>
+    `;
+    container.innerHTML = html;
+
+    const checkBtn = document.getElementById('checkCoreBtn');
+    const feedback = document.getElementById('coreFeedback');
+    const dots = document.querySelectorAll('.core-dot');
+    const cellDivs = document.querySelectorAll('.core-cell');
+
+    function updateCells() {
+        cellDivs.forEach((cell, i) => {
+            let r = Math.floor(i / cols);
+            let c = i % cols;
+            let tl = r * dotCols + c;
+            let tr = tl + 1;
+            let bl = (r + 1) * dotCols + c;
+            let br = bl + 1;
+
+            let currentSum = (isLit[tl]?1:0) + (isLit[tr]?1:0) + (isLit[bl]?1:0) + (isLit[br]?1:0);
+
+            if (currentSum === cellTargets[i]) {
+                cell.style.color = 'var(--success)';
+                cell.style.textShadow = '0 0 10px var(--success)';
+                cell.style.background = 'rgba(34, 197, 94, 0.1)'; // Delikatne podświetlenie tła
+            } else if (currentSum > cellTargets[i]) {
+                cell.style.color = 'var(--danger)';
+                cell.style.textShadow = '0 0 10px var(--danger)';
+                cell.style.background = 'transparent';
+            } else {
+                cell.style.color = 'var(--term-fg)';
+                cell.style.textShadow = 'none';
+                cell.style.background = 'transparent';
+            }
+        });
+    }
+
+    dots.forEach(dot => {
+        dot.addEventListener('click', () => {
+            if (checkBtn.disabled) return;
+            
+            let id = parseInt(dot.getAttribute('data-id'));
+            isLit[id] = !isLit[id];
+            
+            if (isLit[id]) {
+                dot.style.background = 'var(--term-fg)';
+                dot.style.boxShadow = '0 0 12px var(--term-fg)';
+            } else {
+                dot.style.background = 'var(--term-dim)';
+                dot.style.boxShadow = 'none';
+            }
+            
+            updateCells();
+        });
+    });
+
+    checkBtn.addEventListener('click', () => {
+        let isSolved = true;
+        
+        for (let i = 0; i < totalCells; i++) {
+            let r = Math.floor(i / cols);
+            let c = i % cols;
+            let tl = r * dotCols + c;
+            let tr = tl + 1;
+            let bl = (r + 1) * dotCols + c;
+            let br = bl + 1;
+
+            let currentSum = (isLit[tl]?1:0) + (isLit[tr]?1:0) + (isLit[bl]?1:0) + (isLit[br]?1:0);
+            
+            if (currentSum !== cellTargets[i]) {
+                isSolved = false;
+                break;
+            }
+        }
+
+        if (isSolved) {
+            feedback.style.color = 'var(--success)';
+            feedback.textContent = "KLASTRY PAMIĘCI ZAUTORYZOWANE.";
+            checkBtn.disabled = true;
+            document.getElementById('coreCellsGrid').style.boxShadow = "0 0 30px rgba(34, 197, 94, 0.5)";
+            document.getElementById('coreCellsGrid').style.borderColor = "var(--success)";
+            setTimeout(() => winStage(moduleKey), 2000);
+        } else {
+            feedback.style.color = 'var(--danger)';
+            feedback.textContent = "BŁĄD: NIEZGODNOŚĆ SUM KONTROLNYCH.";
+            setTimeout(() => feedback.textContent = "", 2000);
+        }
+    });
+    
+    updateCells();
+}
+
+// --- LOGIKA GRY: NAWIGACJA (AUTOPILOT) ---
+function initNavigationGame(stage, moduleKey, container) {
+    const size = 6; 
+    const cellSize = 50; 
+    const gap = 4;
+    
+    let startPos = { x: 0, y: 5 }; 
+    let targetPos = stage === 1 ? { x: 5, y: 0 } : { x: 5, y: 5 }; 
+    let keyPos = stage === 2 ? { x: 0, y: 0 } : null; 
+    let keyCollected = stage === 1; 
+    
+    let walls = stage === 1 
+        ? [{x:2,y:2}, {x:2,y:3}, {x:3,y:2}, {x:3,y:3}, {x:2,y:1}, {x:3,y:4}] 
+        : [
+            {x:1,y:0}, {x:1,y:1}, {x:1,y:2}, 
+            {x:2,y:4}, {x:2,y:5},            
+            {x:4,y:2}, {x:4,y:3}, {x:4,y:4}  
+          ];
+
+    let currentShipPos = { ...startPos };
+    let sequence = [];
+    let isExecuting = false;
+
+    const dirSymbols = { 'UP': '▲', 'DOWN': '▼', 'LEFT': '◀', 'RIGHT': '▶' };
+
+    let html = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; user-select: none;">
+            
+            <div id="navGrid" style="display: grid; grid-template-columns: repeat(${size}, ${cellSize}px); grid-template-rows: repeat(${size}, ${cellSize}px); gap: ${gap}px; background: var(--term-bg); padding: 10px; border: 2px solid var(--term-fg); box-shadow: inset 0 0 20px rgba(30,231,255,0.1); margin-bottom: 15px;">
+                ${Array(size * size).fill(0).map((_, i) => `<div class="nav-cell" data-id="${i}" style="width: 100%; height: 100%; background: var(--term-dim); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.5rem; transition: background 0.2s;"></div>`).join('')}
+            </div>
+
+            <!-- Panel sekwencji (Szerokość 508px, wyśrodkowane klocki) -->
+            <div style="width: 100%; max-width: 508px; height: 98px; background: #000; border: 1px dashed var(--term-fg); padding: 10px; box-sizing: border-box; margin-bottom: 15px; display: flex; flex-wrap: wrap; align-content: flex-start; justify-content: center; gap: 6px; overflow: hidden;" id="sequenceDisplay">
+                <span style="color: #444; font-size: 0.9rem;">[OCZEK. NA KOMENDY]</span>
+            </div>
+
+            <!-- Klawiatura strzałek -->
+            <div style="display: grid; grid-template-columns: repeat(3, 70px); grid-template-rows: repeat(2, 70px); gap: 10px; margin-bottom: 25px; justify-content: center;">
+                <div></div>
+                <button class="nav-btn" data-dir="UP" style="width: 100%; height: 100%; margin: 0; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;">▲</button>
+                <div></div>
+                <button class="nav-btn" data-dir="LEFT" style="width: 100%; height: 100%; margin: 0; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;">◀</button>
+                <button class="nav-btn" data-dir="DOWN" style="width: 100%; height: 100%; margin: 0; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;">▼</button>
+                <button class="nav-btn" data-dir="RIGHT" style="width: 100%; height: 100%; margin: 0; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;">▶</button>
+            </div>
+
+            <!-- Rząd akcji (Szerokość 508px dopasowana do ekranu sekwencji) -->
+            <div style="display: flex; gap: 10px; width: 100%; max-width: 508px;">
+                <button id="navExecuteBtn" style="flex: 1; min-height: 55px; background: var(--term-fg); color: var(--term-bg); border: none; font-size: 1.1rem; font-weight: bold; cursor: pointer;">URUCHOM SEKWENCJĘ</button>
+                <button id="navUndoBtn" style="width: 55px; height: 55px; background: var(--danger); color: var(--term-bg); border: none; font-size: 1.5rem; display: flex; justify-content: center; align-items: center; cursor: pointer; flex-shrink: 0; border-radius: 4px;">⌫</button>
+            </div>
+
+            <p id="navFeedback" style="color: var(--danger); margin-top: 10px; height: 20px; font-weight: bold; text-align: center; font-size: 0.9rem;"></p>
+        </div>
+    `;
+    container.innerHTML = html;
+
+    const cells = document.querySelectorAll('.nav-cell');
+    const seqDisplay = document.getElementById('sequenceDisplay');
+    const executeBtn = document.getElementById('navExecuteBtn');
+    const undoBtn = document.getElementById('navUndoBtn');
+    const feedback = document.getElementById('navFeedback');
+
+    function getIndex(x, y) { return y * size + x; }
+
+    function drawMap() {
+        cells.forEach(c => {
+            c.innerHTML = '';
+            c.style.background = 'var(--term-dim)';
+            c.style.color = 'var(--term-fg)';
+            c.style.textShadow = 'none';
+        });
+
+        walls.forEach(w => {
+            let idx = getIndex(w.x, w.y);
+            cells[idx].innerHTML = 'X';
+            cells[idx].style.color = 'var(--danger)';
+            cells[idx].style.background = '#2a0000';
+        });
+
+        if (keyPos && !keyCollected) {
+            let idx = getIndex(keyPos.x, keyPos.y);
+            cells[idx].innerHTML = 'K';
+            cells[idx].style.color = '#ffeb3b';
+            cells[idx].style.textShadow = '0 0 10px #ffeb3b';
+        }
+
+        let targetIdx = getIndex(targetPos.x, targetPos.y);
+        cells[targetIdx].innerHTML = 'B';
+        cells[targetIdx].style.color = 'var(--success)';
+        cells[targetIdx].style.textShadow = '0 0 10px var(--success)';
+
+        let shipIdx = getIndex(currentShipPos.x, currentShipPos.y);
+        cells[shipIdx].innerHTML = '►';
+        cells[shipIdx].style.color = '#fff';
+        cells[shipIdx].style.textShadow = '0 0 10px #fff';
+        cells[shipIdx].style.background = 'var(--term-fg)'; 
+    }
+
+    // Zmienione rozmiary klocków w panelu sekwencji (powiększone do 35x35)
+    function updateSequenceDisplay() {
+        if (sequence.length === 0) {
+            seqDisplay.innerHTML = '<span style="color: #444; font-size: 0.9rem;">[OCZEK. NA KOMENDY]</span>';
+        } else {
+            seqDisplay.innerHTML = sequence.map(d => `
+                <div style="width: 35px; height: 35px; box-sizing: border-box; border: 1px solid var(--term-fg); background: var(--term-dim); color: var(--term-fg); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: inset 0 0 8px rgba(30,231,255,0.2);">
+                    ${dirSymbols[d]}
+                </div>
+            `).join('');
+        }
+    }
+
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (isExecuting || sequence.length >= 24) return; 
+            sequence.push(btn.getAttribute('data-dir'));
+            updateSequenceDisplay();
+        });
+    });
+
+    undoBtn.addEventListener('click', () => {
+        if (isExecuting || sequence.length === 0) return;
+        sequence.pop();
+        updateSequenceDisplay();
+    });
+
+    executeBtn.addEventListener('click', () => {
+        if (isExecuting || sequence.length === 0) return;
+        isExecuting = true;
+        feedback.textContent = "";
+        executeBtn.disabled = true;
+        
+        currentShipPos = { ...startPos };
+        keyCollected = stage === 1; 
+        drawMap();
+
+        let step = 0;
+        
+        let interval = setInterval(() => {
+            if (step >= sequence.length) {
+                clearInterval(interval);
+                
+                if (currentShipPos.x === targetPos.x && currentShipPos.y === targetPos.y && keyCollected) {
+                    feedback.style.color = 'var(--success)';
+                    feedback.textContent = "DOKOWANIE ZAKOŃCZONE SUKCESEM.";
+                    document.getElementById('navGrid').style.boxShadow = "0 0 30px rgba(34, 197, 94, 0.5)";
+                    document.getElementById('navGrid').style.borderColor = "var(--success)";
+                    setTimeout(() => winStage(moduleKey), 2000);
+                } else {
+                    failRun("BŁĄD: NIE OSIĄGNIĘTO CELU LUB BRAK KLUCZA.");
+                }
+                return;
+            }
+
+            let dir = sequence[step];
+            if (dir === 'UP') currentShipPos.y -= 1;
+            if (dir === 'DOWN') currentShipPos.y += 1;
+            if (dir === 'LEFT') currentShipPos.x -= 1;
+            if (dir === 'RIGHT') currentShipPos.x += 1;
+
+            if (currentShipPos.x < 0 || currentShipPos.x >= size || currentShipPos.y < 0 || currentShipPos.y >= size) {
+                clearInterval(interval);
+                failRun("KRYTYCZNE USZKODZENIE: OPUSZCZONO SEKTOR!");
+                return;
+            }
+
+            if (walls.some(w => w.x === currentShipPos.x && w.y === currentShipPos.y)) {
+                clearInterval(interval);
+                failRun("KRYTYCZNE USZKODZENIE: KOLIZJA Z OBIEKTEM!");
+                return;
+            }
+
+            if (keyPos && currentShipPos.x === keyPos.x && currentShipPos.y === keyPos.y) {
+                keyCollected = true;
+            }
+
+            drawMap();
+            step++;
+        }, 350); 
+    });
+
+    function failRun(msg) {
+        feedback.style.color = 'var(--danger)';
+        feedback.textContent = msg;
+        
+        document.getElementById('navGrid').style.borderColor = "var(--danger)";
+        setTimeout(() => {
+            document.getElementById('navGrid').style.borderColor = "var(--term-fg)";
+            currentShipPos = { ...startPos }; 
+            keyCollected = stage === 1;
+            drawMap();
+            isExecuting = false;
+            executeBtn.disabled = false;
+        }, 1500);
+    }
+
+    drawMap();
 }
