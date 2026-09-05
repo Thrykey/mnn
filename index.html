@@ -16,18 +16,24 @@
       
       <div id="step1">
         <p>Wprowadź 3-cyfrowy numer swojej drużyny:</p>
-        <input type="number" id="teamInput" placeholder="np. 111">
+        <input type="number" id="teamInput" placeholder="">
         <button id="verifyTeamBtn">WERYFIKUJ</button>
       </div>
 
       <div id="step2" style="display: none;">
         <p style="color: var(--accent);">Witaj, Drużyno <span id="displayTeam"></span>!</p>
-        <p>Aby wygenerować hasło awaryjne:<br>
-           1. Dodaj do swojego numeru drużyny liczbę <strong>150</strong>.<br>
-           2. Na samym początku wpisz literę <strong>E</strong> (jak Emergency).
+        <p style="text-align: left; font-size: 0.85rem; line-height: 1.5;">Aby wygenerować hasło awaryjne:<br><br>
+           1. Przed numer drużyny wstaw literę alfabetu o numerze równym sumie cyfr numeru drużyny.<br>
+           2. Każdą cyfrę numeru drużyny zamień na jej dopełnienie do 10 (czyli 10 - cyfra).<br>
+           3. Przestaw otrzymane cyfry od najmniejszej do największej.<br>
+           4. Do otrzymanej liczby dodaj dzisiejszy dzień miesiąca.<br>
+           5. Od otrzymanej liczby odejmij numer dzisiejszego miesiąca.<br>
+           6. Za otrzymaną liczbę wstaw literę alfabetu o numerze równym sumie jej cyfr.<br><br>
+           <strong>Hasło = litera z pkt 1 + liczba z pkt 5 + litera z pkt 6.</strong>
         </p>
-        <input type="text" id="passwordInput" placeholder="Hasło (np. E261)">
-        <button id="loginBtn">AUTORYZUJ (2 pkt)</button>
+        <input type="text" id="passwordInput" placeholder="Hasło">
+        <button id="loginBtn">AUTORYZUJ (2 PKT)</button>
+        <button id="hintUsedBtn" type="button" style="border-color: var(--danger); color: var(--danger); font-size: 0.85rem; min-height: 45px;">SKORZYSTALIŚMY Z PODPOWIEDZI (-1 PKT)</button>
         <p id="loginError" style="color: var(--danger); font-size: 0.8rem; display: none;">Błędne hasło! Spróbuj ponownie.</p>
       </div>
     </div>
@@ -76,6 +82,19 @@
         Zalogowano pomyślnie. Wybierz zepsuty moduł, aby zapoznać się z instrukcją jego naprawy.
       </div>
     </aside>
+  </div>
+
+  <!-- EKRAN KOŃCOWY -->
+  <div id="endScreen" class="screen">
+    <div class="login-panel">
+      <h1>MISJA ZAKOŃCZONA</h1>
+      <p class="warning-text">SYSTEMY ZABEZPIECZONE. OCZEKIWANIE NA EWAKUACJĘ.</p>
+      <div class="status-box">Drużyna: <span id="endTeamName">---</span></div>
+      <div class="status-box">Zdobyte punkty: <span id="endPoints">0</span>/9</div>
+      <p style="margin-top: 20px;">KOD KOŃCOWY MISJI:</p>
+      <div id="endCode" style="font-size: 3rem; letter-spacing: 4px; margin: 15px 0; color: var(--success); text-shadow: 0 0 10px var(--success);">----</div>
+      <p style="font-size: 0.9rem;">Podaj ten kod prowadzącemu, aby potwierdzić zakończenie misji.</p>
+    </div>
   </div>
 
   <script src="script.js"></script>

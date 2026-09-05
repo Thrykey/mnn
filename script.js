@@ -1,6 +1,8 @@
 // --- STAN GRY ---
 let currentTeam = '';
 let totalPoints = 0;
+let activeModule = null; // klucz aktualnie otwartego modułu
+let passwordHintUsed = false; // czy drużyna skorzystała z podpowiedzi do hasła (-1 pkt)
 
 // Struktura naszych nowych modułów
 const modules = {
@@ -10,6 +12,44 @@ const modules = {
     core: { name: 'Rdzeń Pamięci', stages: 1, currentStage: 1, points: 0 },
     comm: { name: 'Nadajnik', stages: 1, currentStage: 1, points: 0 }
 };
+
+// --- POMOCNICZE: LITERY ALFABETU I SUMA CYFR ---
+// n: numer litery (1 = A, 2 = B ... 26 = Z), zawijane modulo 26
+function letterFromNumber(n) {
+    const idx = ((n - 1) % 26 + 26) % 26;
+    return String.fromCharCode(65 + idx);
+}
+
+// Suma cyfr liczby (dla liczb ujemnych liczona jest wartość bezwzględna)
+function sumDigits(n) {
+    return String(Math.abs(n)).split('').reduce((sum, d) => sum + parseInt(d, 10), 0);
+}
+
+// Generuje poprawne hasło awaryjne dla numeru drużyny (kroki 1-6, patrz instrukcja na ekranie logowania)
+function computeEmergencyPassword(teamNumberStr) {
+    const digits = String(teamNumberStr).split('').map(Number);
+    const digitSum = digits.reduce((a, b) => a + b, 0);
+
+    // Krok 1: litera z sumy cyfr numeru drużyny
+    const letterStart = letterFromNumber(digitSum);
+
+    // Krok 2: dopełnienie każdej cyfry do 10
+    const complements = digits.map(d => 10 - d);
+
+    // Krok 3: sortowanie rosnąco i złożenie z powrotem w liczbę
+    const sorted = [...complements].sort((a, b) => a - b);
+    const afterSort = parseInt(sorted.join(''), 10);
+
+    // Krok 4 i 5: dodaj dzisiejszy dzień miesiąca, odejmij numer dzisiejszego miesiąca
+    // (bieżąca data systemowa - drużyny rozwiązują to na żywo w dniu gry)
+    const today = new Date();
+    const N = afterSort + today.getDate() - (today.getMonth() + 1);
+
+    // Krok 6: litera z sumy cyfr N
+    const letterEnd = letterFromNumber(sumDigits(N));
+
+    return `${letterStart}${N}${letterEnd}`;
+}
 
 // --- LOGOWANIE ---
 document.getElementById('verifyTeamBtn').addEventListener('click', () => {
@@ -22,14 +62,23 @@ document.getElementById('verifyTeamBtn').addEventListener('click', () => {
     }
 });
 
+document.getElementById('hintUsedBtn').addEventListener('click', () => {
+    if (passwordHintUsed) return; // zabezpieczenie przed podwójnym odliczeniem
+    passwordHintUsed = true;
+    const btn = document.getElementById('hintUsedBtn');
+    btn.textContent = 'PODPOWIEDŹ ODNOTOWANA (-1 PKT)';
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    document.getElementById('loginBtn').textContent = 'AUTORYZUJ (1 PKT)';
+});
+
 document.getElementById('loginBtn').addEventListener('click', () => {
     const pwdInput = document.getElementById('passwordInput').value.trim().toUpperCase();
-    const expectedNumber = parseInt(currentTeam) + 150;
-    const expectedPassword = `E${expectedNumber}`;
+    const expectedPassword = computeEmergencyPassword(currentTeam);
 
     if (pwdInput === expectedPassword) {
-        // Sukces logowania
-        totalPoints += 2;
+        // 2 pkt standardowo, 1 pkt jeśli drużyna skorzystała z podpowiedzi
+        totalPoints += passwordHintUsed ? 1 : 2;
         updateUI();
         document.getElementById('loginScreen').classList.remove('active');
         document.getElementById('dashboardScreen').classList.add('active');
@@ -40,6 +89,7 @@ document.getElementById('loginBtn').addEventListener('click', () => {
 });
 
 // --- OBSŁUGA KOKPITU ---
+// Odświeża licznik punktów, etykiety modułów i status globalny na kokpicie
 function updateUI() {
     document.getElementById('totalPoints').textContent = totalPoints;
     
@@ -64,15 +114,19 @@ function updateUI() {
 // Podpinanie przycisków menu
 Object.keys(modules).forEach(key => {
     document.getElementById(`btn_${key}`).addEventListener('click', () => {
+        if (key === activeModule) return; // moduł już otwarty - ignoruj kliknięcie
+
         // Usuń klasę active ze wszystkich
         document.querySelectorAll('.module-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(`btn_${key}`).classList.add('active');
-        
+
+        activeModule = key;
         loadGame(key);
     });
 });
 
 // --- ŁADOWANIE GIER ---
+// Wyświetla instrukcję i uruchamia minigrę dla wybranego modułu
 function loadGame(moduleKey) {
     const mod = modules[moduleKey];
     const container = document.getElementById('gameContainer');
@@ -114,7 +168,7 @@ if (moduleKey === 'nav') {
     }
 }
 
-// Funkcja wywoływana po wygraniu poziomu mini-gry
+// Wywoływana po wygraniu poziomu minigry - nalicza punkty i przechodzi do kolejnego etapu
 window.winStage = function(moduleKey) {
     const mod = modules[moduleKey];
     if (mod.points < mod.stages) {
@@ -126,11 +180,16 @@ window.winStage = function(moduleKey) {
         }
         
         updateUI();
-        loadGame(moduleKey); // Przeładowanie widoku
+
+        // Odśwież widok tylko jeśli gracz nadal patrzy na ten moduł
+        if (moduleKey === activeModule) {
+            loadGame(moduleKey);
+        }
     }
 };
 
 // --- LOGIKA GRY: OSCYLOSKOP (SILNIKI) ---
+// Minigra: dopasuj falę suwakami do zepsutego sygnału
 function initOscilloscopeGame(stage, moduleKey, container) {
     container.innerHTML = `
         <div style="text-align: center; width: 100%;">
@@ -177,7 +236,7 @@ function initOscilloscopeGame(stage, moduleKey, container) {
     if (Math.abs(targetAmp - 50) < 10) targetAmp += 20; 
     if (Math.abs(targetFreq - 35) < 10) targetFreq -= 15;
 
-    // Funkcja rysująca cały oscyloskop
+    // Rysuje siatkę CRT oraz obie fale (docelową i użytkownika)
     function drawWaves() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
@@ -264,6 +323,7 @@ function initOscilloscopeGame(stage, moduleKey, container) {
 }
 
 // --- LOGIKA GRY: RUROCIĄGI (WENTYLACJA) ---
+// Minigra: obracaj segmenty rurociągu, aby połączyć wejście z wyjściem
 function initPipesGame(moduleKey, container) {
     let grid = [
         { id: 0,  t: 'line',   target: 0, r: Math.floor(Math.random() * 4) }, // Start
@@ -338,12 +398,16 @@ function initPipesGame(moduleKey, container) {
     const feedback = document.getElementById('pipesFeedback');
     
     document.querySelectorAll('.pipe-cell').forEach(cellElement => {
+        const id = parseInt(cellElement.getAttribute('data-id'));
+        // Kąt animacji rośnie bez zawijania, żeby obrót zawsze szedł do przodu o 90°
+        let visualDeg = grid[id].r * 90;
+
         cellElement.addEventListener('click', function() {
             if(checkBtn.disabled) return;
-            const id = parseInt(this.getAttribute('data-id'));
             const cell = grid[id];
-            cell.r = (cell.r + 1) % 4;
-            this.style.transform = `rotate(${cell.r * 90}deg)`;
+            cell.r = (cell.r + 1) % 4; // stan logiczny 0-3, używany do sprawdzania rozwiązania
+            visualDeg += 90;
+            this.style.transform = `rotate(${visualDeg}deg)`;
         });
     });
 
@@ -360,8 +424,16 @@ function initPipesGame(moduleKey, container) {
             feedback.style.color = 'var(--success)';
             feedback.textContent = "PRZEPŁYW USTABILIZOWANY.";
             checkBtn.disabled = true;
-            document.getElementById('pipesGrid').style.boxShadow = "inset 0 0 40px rgba(34, 197, 94, 0.6)";
-            document.querySelectorAll('.pipe-cell rect').forEach(rect => rect.setAttribute('fill', 'var(--success)'));
+
+            // Podświetl tylko komórki na trasie (target !== -1), pomijając ślepe zaułki
+            document.querySelectorAll('.pipe-cell').forEach(cellEl => {
+                const cellId = parseInt(cellEl.getAttribute('data-id'));
+                if (grid[cellId].target !== -1) {
+                    cellEl.style.background = 'rgba(34, 197, 94, 0.25)';
+                    cellEl.style.boxShadow = '0 0 12px rgba(34, 197, 94, 0.6)';
+                    cellEl.querySelectorAll('rect').forEach(rect => rect.setAttribute('fill', 'var(--success)'));
+                }
+            });
 
             setTimeout(() => winStage(moduleKey), 2000);
         } else {
@@ -373,6 +445,7 @@ function initPipesGame(moduleKey, container) {
 }
 
 // --- LOGIKA GRY: NADAJNIK (ŁĄCZENIE KABLI / FLOW FREE) ---
+// Minigra: połącz pary węzłów tego samego koloru, nie przecinając ścieżek
 function initTransmitterGame(moduleKey, container) {
     const cols = 7; 
     
@@ -443,6 +516,7 @@ function initTransmitterGame(moduleKey, container) {
     const checkBtn = document.getElementById('checkFlowBtn');
     const feedback = document.getElementById('flowFeedback');
 
+    // Rysuje aktualne ścieżki jako linie SVG
     function drawPaths() {
         let svgHtml = `<svg width="100%" height="100%">`;
         Object.keys(paths).forEach(color => {
@@ -461,6 +535,7 @@ function initTransmitterGame(moduleKey, container) {
         svgWrapper.innerHTML = svgHtml; 
     }
 
+    // Rozpoczyna nową ścieżkę od węzła-końcówki albo wznawia rysowanie od punktu na istniejącej ścieżce
     function handleStart(id) {
         if (checkBtn.disabled) return;
         if (endpoints[id]) {
@@ -480,6 +555,7 @@ function initTransmitterGame(moduleKey, container) {
         }
     }
 
+    // Przedłuża, skraca albo kończy aktualnie rysowaną ścieżkę w zależności od komórki, na którą wjedzie kursor
     function handleMove(id) {
         if (!isDrawing || checkBtn.disabled) return;
         let currentPath = paths[isDrawing];
@@ -577,18 +653,19 @@ function initTransmitterGame(moduleKey, container) {
 }
 
 // --- LOGIKA GRY: RDZEŃ PAMIĘCI (DOTS / KROPKI Z CYFRAMI) ---
+// Minigra: zapal węzły w rogach sektorów tak, by suma przy każdym sektorze zgadzała się z podaną cyfrą
 function initMemoryCoreGame(moduleKey, container) {
     const cols = 4; 
     const dotCols = cols + 1;
     const totalDots = dotCols * dotCols;
     const totalCells = cols * cols;
     const cellSize = 60; 
-    const offset = 25; // Zwiększony lekko margines
+    const offset = 25; // margines wewnętrzny planszy (px)
 
-    // 1. Generujemy losowy, rozwiązywalny układ (ukryta prawda)
+    // Losujemy układ zapalonych węzłów - to jest jednocześnie ukryte, poprawne rozwiązanie
     let secretPattern = Array(totalDots).fill(0).map(() => Math.random() > 0.5 ? 1 : 0);
     
-    // 2. Obliczamy wartości dla 16 sektorów (Tym razem każda komórka ma cyfrę!)
+    // Na podstawie tego układu liczymy cyfrę (0-4) dla każdego z 16 sektorów
     let cellTargets = [];
     for (let r = 0; r < cols; r++) {
         for (let c = 0; c < cols; c++) {
@@ -643,6 +720,7 @@ function initMemoryCoreGame(moduleKey, container) {
     const dots = document.querySelectorAll('.core-dot');
     const cellDivs = document.querySelectorAll('.core-cell');
 
+    // Przelicza sumy przy sektorach na podstawie zapalonych węzłów i koloruje je odpowiednio
     function updateCells() {
         cellDivs.forEach((cell, i) => {
             let r = Math.floor(i / cols);
@@ -726,6 +804,7 @@ function initMemoryCoreGame(moduleKey, container) {
 }
 
 // --- LOGIKA GRY: NAWIGACJA (AUTOPILOT) ---
+// Minigra: zaprogramuj sekwencję ruchów, aby dolecieć do celu omijając przeszkody
 function initNavigationGame(stage, moduleKey, container) {
     const size = 6; 
     const cellSize = 50; 
@@ -789,8 +868,10 @@ function initNavigationGame(stage, moduleKey, container) {
     const undoBtn = document.getElementById('navUndoBtn');
     const feedback = document.getElementById('navFeedback');
 
+    // Zamienia współrzędne x,y na indeks w tablicy komórek
     function getIndex(x, y) { return y * size + x; }
 
+    // Rysuje siatkę: ściany, klucz, cel i aktualną pozycję statku
     function drawMap() {
         cells.forEach(c => {
             c.innerHTML = '';
@@ -825,7 +906,7 @@ function initNavigationGame(stage, moduleKey, container) {
         cells[shipIdx].style.background = 'var(--term-fg)'; 
     }
 
-    // Zmienione rozmiary klocków w panelu sekwencji (powiększone do 35x35)
+    // Odświeża podgląd wprowadzonej sekwencji komend
     function updateSequenceDisplay() {
         if (sequence.length === 0) {
             seqDisplay.innerHTML = '<span style="color: #444; font-size: 0.9rem;">[OCZEK. NA KOMENDY]</span>';
@@ -907,6 +988,7 @@ function initNavigationGame(stage, moduleKey, container) {
         }, 350); 
     });
 
+    // Obsługuje nieudaną próbę: pokazuje błąd i resetuje statek do pozycji startowej
     function failRun(msg) {
         feedback.style.color = 'var(--danger)';
         feedback.textContent = msg;
@@ -924,3 +1006,28 @@ function initNavigationGame(stage, moduleKey, container) {
 
     drawMap();
 }
+
+// --- KOD ZAKOŃCZENIA MISJI ---
+// X: litera kontrolna zależna tylko od numeru drużyny (0 = A, 1 = B ... 25 = Z)
+// L: liczba zależna od numeru drużyny i zdobytych punktów
+document.getElementById('endMissionBtn').addEventListener('click', () => {
+    const confirmed = confirm(
+        'Czy na pewno chcesz zakończyć misję?\n\nModuły zostaną zablokowane, a wynik zapisany jako ostateczny. Tej operacji nie można cofnąć.'
+    );
+    if (!confirmed) return;
+
+    const D = parseInt(currentTeam, 10);
+    const P = totalPoints;
+
+    const xIndex = ((D + 13) % 26 + 26) % 26;
+    const X = String.fromCharCode(65 + xIndex);
+    const L = (P + 11) * D + 7;
+    const finalCode = `${X}${L}`;
+
+    document.getElementById('endTeamName').textContent = D;
+    document.getElementById('endPoints').textContent = P;
+    document.getElementById('endCode').textContent = finalCode;
+
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('endScreen').classList.add('active');
+});

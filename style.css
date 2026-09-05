@@ -1,10 +1,9 @@
 :root {
-  /* --- GŁÓWNE KOLORY (Zmień te wartości, aby zmienić motyw na fioletowy) --- */
+  /* --- GŁÓWNE KOLORY --- */
   --term-bg: #000508;      /* Tło: bardzo ciemny granat/czerń */
   --term-fg: #1ee7ff;      /* Główny kolor: jasny cyjan */
   --term-dim: #001a2a;     /* Tło paneli: ciemny, zgaszony niebieski */
   
-  /* Poświata tekstu (dopasuj kolory rgba do głównego koloru) */
   --term-glow: 0 0 4px rgba(30, 231, 255, 0.6), 0 0 10px rgba(30, 231, 255, 0.3);
   
   /* --- KOLORY POMOCNICZE --- */
