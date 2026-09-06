@@ -58,7 +58,14 @@ document.getElementById('verifyTeamBtn').addEventListener('click', () => {
         currentTeam = teamInput;
         document.getElementById('displayTeam').textContent = currentTeam;
         document.getElementById('step1').style.display = 'none';
-        document.getElementById('step2').style.display = 'block';
+        
+        const step2 = document.getElementById('step2');
+        step2.style.display = 'block';
+        
+        // Wymuszamy reflow i dodajemy klasę, by animacja wyrenderowała się na drugim ekranie
+        step2.classList.remove('terminal-render');
+        void step2.offsetWidth;
+        step2.classList.add('terminal-render');
     }
 });
 
@@ -80,6 +87,7 @@ document.getElementById('loginBtn').addEventListener('click', () => {
         // 2 pkt standardowo, 1 pkt jeśli drużyna skorzystała z podpowiedzi
         totalPoints += passwordHintUsed ? 1 : 2;
         updateUI();
+        document.body.classList.add('logged-in');
         document.getElementById('loginScreen').classList.remove('active');
         document.getElementById('dashboardScreen').classList.add('active');
         document.getElementById('dashTeamName').textContent = currentTeam;
@@ -136,39 +144,45 @@ function loadGame(moduleKey) {
     const mod = modules[moduleKey];
     const container = document.getElementById('gameContainer');
     const instr = document.getElementById('instructionContent');
+    
+    // Funkcja pomocnicza do ustawiania instrukcji z efektem renderowania CRT
+    const setInstr = (html) => {
+        instr.innerHTML = `<div class="terminal-render">${html}</div>`;
+    };
+
     document.getElementById('gameTitle').textContent = `Naprawa: ${mod.name} (Poziom ${mod.currentStage}/${mod.stages})`;
 
     if (mod.points >= mod.stages) {
         container.innerHTML = `<div class="idle-logo" style="color: var(--success)">MODUŁ W PEŁNI SPRAWNY</div>`;
-        instr.innerHTML = `System ${mod.name} działa poprawnie. Nie wymaga dalszych interwencji.`;
+        setInstr(`System ${mod.name} działa poprawnie. Nie wymaga dalszych interwencji.`);
         return;
     }
 
     // Dynamiczne intruckje dla poszczególnych mini-gierek
-if (moduleKey === 'nav') {
-        instr.innerHTML = `<strong>CEL:</strong> Zaprogramuj trasę lotu.<br><br>
+    if (moduleKey === 'nav') {
+        setInstr(`<strong>CEL:</strong> Zaprogramuj trasę lotu.<br><br>
         Wprowadź sekwencję komend napędowych (strzałek), aby ominąć przeszkody <strong>[X]</strong> i zadokować w bazie <strong>[B]</strong>.<br><br>
-        <em>Poziom 2: Zbierz klucz autoryzacyjny <strong>[K]</strong> przed dokowaniem.</em>`;
+        <em>Poziom 2: Zbierz klucz autoryzacyjny <strong>[K]</strong> przed dokowaniem.</em>`);
         initNavigationGame(mod.currentStage, moduleKey, container);
     }
     else if (moduleKey === 'eng') {
-        instr.innerHTML = `<strong>CEL:</strong> Zsynchronizuj rdzeń silnika.<br><br>
-        Użyj suwaków, aby precyzyjnie nałożyć Twój sygnał na uszkodzony strumień mocy.`;
+        setInstr(`<strong>CEL:</strong> Zsynchronizuj rdzeń silnika.<br><br>
+        Użyj suwaków, aby precyzyjnie nałożyć Twój sygnał na uszkodzony strumień mocy.`);
         initOscilloscopeGame(mod.currentStage, moduleKey, container);
     } 
     else if (moduleKey === 'life') {
-        instr.innerHTML = `<strong>CEL:</strong> Przywróć zasilanie tlenu.<br><br>
-        Klikaj w wybrane segmenty rurociągu, aby je obrócić. Musisz utworzyć nieprzerwany strumień pomiędzy zaworem wejściowym <strong>[O2 IN]</strong>, a strefą załogi <strong>[OUT]</strong>. Ślepe zaułki nie mają znaczenia.`;
+        setInstr(`<strong>CEL:</strong> Przywróć zasilanie tlenu.<br><br>
+        Klikaj w wybrane segmenty rurociągu, aby je obrócić. Musisz utworzyć nieprzerwany strumień pomiędzy zaworem wejściowym <strong>[O2 IN]</strong>, a strefą załogi <strong>[OUT]</strong>. Ślepe zaułki nie mają znaczenia.`);
         initPipesGame(moduleKey, container);
     }
     else if (moduleKey === 'comm') {
-        instr.innerHTML = `<strong>CEL:</strong> Skrosuj przewody nadajnika.<br><br>
-        Połącz ze sobą świecące węzły tego samego koloru, przeciągając po ekranie. Ścieżki danych <strong>nie mogą się przecinać</strong>, a każdy węzeł musi zostać podłączony do swojej pary.`;
+        setInstr(`<strong>CEL:</strong> Skrosuj przewody nadajnika.<br><br>
+        Połącz ze sobą świecące węzły tego samego koloru, przeciągając po ekranie. Ścieżki danych <strong>nie mogą się przecinać</strong>, a każdy węzeł musi zostać podłączony do swojej pary.`);
         initTransmitterGame(moduleKey, container);
     }
     else if (moduleKey === 'core') {
-        instr.innerHTML = `<strong>CEL:</strong> Zautoryzuj klastry pamięci.<br><br>
-        Cyfra wewnątrz sektora oznacza, <strong>ile z jej 4 narożników (węzłów)</strong> musi zostać zasilonych. <br><br>Klikaj w węzły na rogach, aby je aktywować. Kiedy wartość się zgadza, sektor zaświeci się na zielono.`;
+        setInstr(`<strong>CEL:</strong> Zautoryzuj klastry pamięci.<br><br>
+        Cyfra wewnątrz sektora oznacza, <strong>ile z jej 4 narożników (węzłów)</strong> musi zostać zasilonych. <br><br>Klikaj w węzły na rogach, aby je aktywować. Kiedy wartość się zgadza, sektor zaświeci się na zielono.`);
         initMemoryCoreGame(moduleKey, container);
     }
 }
@@ -950,13 +964,21 @@ function initNavigationGame(stage, moduleKey, container) {
 
     function updateHud() {
         if (coordShipEl) coordShipEl.textContent = getCoordLabel(currentShipPos);
+        const targetLabelEl = document.getElementById('navCoordTarget');
+        if (targetLabelEl) {
+            if (keyPos && !keyCollected) {
+                targetLabelEl.innerHTML = `${getCoordLabel(targetPos)} <span class="nav-target-status-tag locked">[ZABLOKOWANA 🔒]</span>`;
+            } else {
+                targetLabelEl.innerHTML = `${getCoordLabel(targetPos)} <span class="nav-target-status-tag unlocked">[OTWARTA ⌖]</span>`;
+            }
+        }
         if (hudKeyEl && stage === 2) {
             if (keyCollected) {
                 hudKeyEl.className = 'nav-hud-badge ok';
                 hudKeyEl.textContent = 'KLUCZ: POBRANY [OK]';
             } else {
                 hudKeyEl.className = 'nav-hud-badge req';
-                hudKeyEl.textContent = 'KLUCZ: WYMAGANY';
+                hudKeyEl.textContent = 'KLUCZ: WYMAGANY 🔒';
             }
         }
     }
@@ -988,10 +1010,16 @@ function initNavigationGame(stage, moduleKey, container) {
             cells[idx].innerHTML = '<span style="color: #facc15; font-size: 1.4rem;">🔑</span>';
         }
 
-        // Baza / Cel
+        // Baza / Cel (Zablokowana dopóki nie zostanie zebrany klucz)
         let targetIdx = getIndex(targetPos.x, targetPos.y);
-        cells[targetIdx].className = 'nav-cell nav-cell-target';
-        cells[targetIdx].innerHTML = '<span style="color: var(--success); font-size: 1.4rem;">⌖</span>';
+        const isLocked = keyPos && !keyCollected;
+        if (isLocked) {
+            cells[targetIdx].className = 'nav-cell nav-cell-target-locked';
+            cells[targetIdx].innerHTML = '<span class="nav-target-lock-icon" title="Baza zablokowana - pobierz klucz autoryzacyjny">🔒</span>';
+        } else {
+            cells[targetIdx].className = 'nav-cell nav-cell-target';
+            cells[targetIdx].innerHTML = '<span style="color: var(--success); font-size: 1.4rem;">⌖</span>';
+        }
 
         // Statek
         if (currentShipPos.x >= 0 && currentShipPos.x < size && currentShipPos.y >= 0 && currentShipPos.y < size) {
@@ -1230,4 +1258,19 @@ document.getElementById('endMissionBtn').addEventListener('click', () => {
 
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById('endScreen').classList.add('active');
+});
+
+// --- RĘCZNE WYŁĄCZENIE EFEKTÓW CRT ---
+const crtToggleBtn = document.getElementById('crtToggleBtn');
+let crtDisabled = false;
+
+crtToggleBtn.addEventListener('click', () => {
+    crtDisabled = !crtDisabled;
+    if (crtDisabled) {
+        document.body.classList.add('disable-crt');
+        crtToggleBtn.textContent = 'WŁĄCZ EFEKTY CRT';
+    } else {
+        document.body.classList.remove('disable-crt');
+        crtToggleBtn.textContent = 'WYŁĄCZ EFEKTY CRT';
+    }
 });
