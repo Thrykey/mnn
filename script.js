@@ -193,7 +193,12 @@ window.winStage = function(moduleKey) {
 function initOscilloscopeGame(stage, moduleKey, container) {
     container.innerHTML = `
         <div style="text-align: center; width: 100%;">
-            <canvas id="oscCanvas" width="500" height="250" style="background: #001018; border: 2px solid var(--term-fg); border-radius: 8px; margin-bottom: 20px; box-shadow: inset 0 0 15px rgba(30, 231, 255, 0.1); width: 100%; max-width: 500px;"></canvas>
+            <canvas id="oscCanvas" width="500" height="250" style="background: #001018; border: 2px solid var(--term-fg); border-radius: 8px; margin-bottom: 10px; box-shadow: inset 0 0 15px rgba(30, 231, 255, 0.1); width: 100%; max-width: 500px;"></canvas>
+            
+            <div style="display: flex; justify-content: center; gap: 30px; margin-bottom: 15px; font-size: 0.85rem; font-weight: bold;">
+                <span style="color: rgba(255, 68, 68, 0.8);">■ USZKODZONY SYGNAŁ</span>
+                <span style="color: var(--term-fg);">■ TWÓJ SYGNAŁ</span>
+            </div>
             
             <div style="display: flex; flex-direction: column; gap: 15px; width: 90%; margin: 0 auto; background: var(--term-dim); padding: 15px; border: 1px dashed var(--term-fg);">
                 
@@ -226,6 +231,9 @@ function initOscilloscopeGame(stage, moduleKey, container) {
     const phaseSlider = document.getElementById('phaseSlider');
     const checkBtn = document.getElementById('checkSyncBtn');
     const feedback = document.getElementById('oscFeedback');
+
+    // Resolve CSS custom property for canvas (canvas 2D context doesn't understand var())
+    const termFgColor = getComputedStyle(document.documentElement).getPropertyValue('--term-fg').trim();
 
     // Losujemy parametry zepsutej fali, upewniając się, że nie wylosują się na startowej pozycji suwaków
     let targetAmp = Math.floor(Math.random() * 60) + 20; // 20-80
@@ -270,7 +278,7 @@ function initOscilloscopeGame(stage, moduleKey, container) {
         const userFreq = parseInt(freqSlider.value);
         const userPhase = stage === 2 ? parseInt(phaseSlider.value) : 0;
 
-        ctx.strokeStyle = 'var(--term-fg)';
+        ctx.strokeStyle = termFgColor;
         ctx.lineWidth = 3;
         ctx.beginPath();
         for(let x=0; x<500; x++) {
@@ -662,22 +670,24 @@ function initMemoryCoreGame(moduleKey, container) {
     const cellSize = 60; 
     const offset = 25; // margines wewnętrzny planszy (px)
 
-    // Losujemy układ zapalonych węzłów - to jest jednocześnie ukryte, poprawne rozwiązanie
-    let secretPattern = Array(totalDots).fill(0).map(() => Math.random() > 0.5 ? 1 : 0);
-    
-    // Na podstawie tego układu liczymy cyfrę (0-4) dla każdego z 16 sektorów
-    let cellTargets = [];
-    for (let r = 0; r < cols; r++) {
-        for (let c = 0; c < cols; c++) {
-            let tl = r * dotCols + c;
-            let tr = tl + 1;
-            let bl = (r + 1) * dotCols + c;
-            let br = bl + 1;
-            
-            let sum = secretPattern[tl] + secretPattern[tr] + secretPattern[bl] + secretPattern[br];
-            cellTargets.push(sum);
+    // Losujemy układ zapalonych węzłów - to jest jednocześnie ukryte, poprawne rozwiązanie.
+    // Powtarzamy losowanie dopóki plansza nie będzie miała min. 3 różnych wartości docelowych
+    // (żeby uniknąć trywialnych łamigłówek typu "same zera" albo "same czwórki").
+    let secretPattern, cellTargets;
+    do {
+        secretPattern = Array(totalDots).fill(0).map(() => Math.random() > 0.5 ? 1 : 0);
+        cellTargets = [];
+        for (let r = 0; r < cols; r++) {
+            for (let c = 0; c < cols; c++) {
+                let tl = r * dotCols + c;
+                let tr = tl + 1;
+                let bl = (r + 1) * dotCols + c;
+                let br = bl + 1;
+                let sum = secretPattern[tl] + secretPattern[tr] + secretPattern[bl] + secretPattern[br];
+                cellTargets.push(sum);
+            }
         }
-    }
+    } while (new Set(cellTargets).size < 3);
 
     let isLit = Array(totalDots).fill(false);
 
