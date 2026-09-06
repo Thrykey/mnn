@@ -128,6 +128,11 @@ Object.keys(modules).forEach(key => {
 // --- ŁADOWANIE GIER ---
 // Wyświetla instrukcję i uruchamia minigrę dla wybranego modułu
 function loadGame(moduleKey) {
+    if (typeof window.activeGameCleanup === 'function') {
+        try { window.activeGameCleanup(); } catch (e) { console.error(e); }
+        window.activeGameCleanup = null;
+    }
+
     const mod = modules[moduleKey];
     const container = document.getElementById('gameContainer');
     const instr = document.getElementById('instructionContent');
@@ -675,7 +680,7 @@ function initMemoryCoreGame(moduleKey, container) {
     // (żeby uniknąć trywialnych łamigłówek typu "same zera" albo "same czwórki").
     let secretPattern, cellTargets;
     do {
-        secretPattern = Array(totalDots).fill(0).map(() => Math.random() > 0.5 ? 1 : 0);
+        secretPattern = Array(totalDots).fill(0).map(() => Math.random() > 0.4 ? 1 : 0);
         cellTargets = [];
         for (let r = 0; r < cols; r++) {
             for (let c = 0; c < cols; c++) {
@@ -687,7 +692,7 @@ function initMemoryCoreGame(moduleKey, container) {
                 cellTargets.push(sum);
             }
         }
-    } while (new Set(cellTargets).size < 3);
+    } while (new Set(cellTargets).size < 3 || cellTargets.filter(v => v === 0).length > 2);
 
     let isLit = Array(totalDots).fill(false);
 
@@ -817,12 +822,11 @@ function initMemoryCoreGame(moduleKey, container) {
 // Minigra: zaprogramuj sekwencję ruchów, aby dolecieć do celu omijając przeszkody
 function initNavigationGame(stage, moduleKey, container) {
     const size = 6; 
-    const cellSize = 50; 
-    const gap = 4;
+    const colLabels = ['A', 'B', 'C', 'D', 'E', 'F'];
     
-    let startPos = { x: 0, y: 5 }; 
-    let targetPos = stage === 1 ? { x: 5, y: 0 } : { x: 5, y: 5 }; 
-    let keyPos = stage === 2 ? { x: 0, y: 0 } : null; 
+    let startPos = { x: 0, y: 5 }; // A6
+    let targetPos = stage === 1 ? { x: 5, y: 0 } : { x: 5, y: 5 }; // F1 lub F6
+    let keyPos = stage === 2 ? { x: 0, y: 0 } : null; // A1
     let keyCollected = stage === 1; 
     
     let walls = stage === 1 
@@ -834,168 +838,339 @@ function initNavigationGame(stage, moduleKey, container) {
           ];
 
     let currentShipPos = { ...startPos };
+    let shipAngle = stage === 1 ? 0 : 90; // 0: góra, 90: prawo
     let sequence = [];
     let isExecuting = false;
+    let activeStepIndex = -1;
+    let interval = null;
+
+    let visitedCells = new Set();
+    visitedCells.add(`${startPos.x},${startPos.y}`);
 
     const dirSymbols = { 'UP': '▲', 'DOWN': '▼', 'LEFT': '◀', 'RIGHT': '▶' };
 
+    function getCoordLabel(pos) {
+        if (!pos || pos.x < 0 || pos.x >= size || pos.y < 0 || pos.y >= size) return '???';
+        return `${colLabels[pos.x]}${pos.y + 1}`;
+    }
+
     let html = `
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; user-select: none;">
-            
-            <div id="navGrid" style="display: grid; grid-template-columns: repeat(${size}, ${cellSize}px); grid-template-rows: repeat(${size}, ${cellSize}px); gap: ${gap}px; background: var(--term-bg); padding: 10px; border: 2px solid var(--term-fg); box-shadow: inset 0 0 20px rgba(30,231,255,0.1); margin-bottom: 15px;">
-                ${Array(size * size).fill(0).map((_, i) => `<div class="nav-cell" data-id="${i}" style="width: 100%; height: 100%; background: var(--term-dim); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.5rem; transition: background 0.2s;"></div>`).join('')}
+        <div class="nav-container-2col">
+            <!-- LEWY PANEL: RADAR -->
+            <div class="nav-panel-left">
+                <div class="nav-radar-area">
+                    <div class="nav-coord-cols">
+                        <div></div>
+                        <div>A</div><div>B</div><div>C</div><div>D</div><div>E</div><div>F</div>
+                    </div>
+                    <div class="nav-grid-row-wrap">
+                        <div class="nav-coord-rows">
+                            <div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div>
+                        </div>
+                        <div id="navGrid" class="nav-grid">
+                            ${Array(size * size).fill(0).map((_, i) => `<div class="nav-cell" data-id="${i}"></div>`).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="nav-radar-telemetry">
+                    <span>POZYCJA: <strong id="navCoordShip" style="color: var(--term-fg); text-shadow: 0 0 5px var(--term-fg);">${getCoordLabel(startPos)}</strong></span>
+                    <span>BAZA: <strong id="navCoordTarget" style="color: var(--success);">${getCoordLabel(targetPos)}</strong></span>
+                </div>
             </div>
 
-            <!-- Panel sekwencji (Szerokość 508px, wyśrodkowane klocki) -->
-            <div style="width: 100%; max-width: 508px; height: 98px; background: #000; border: 1px dashed var(--term-fg); padding: 10px; box-sizing: border-box; margin-bottom: 15px; display: flex; flex-wrap: wrap; align-content: flex-start; justify-content: center; gap: 6px; overflow: hidden;" id="sequenceDisplay">
-                <span style="color: #444; font-size: 0.9rem;">[OCZEK. NA KOMENDY]</span>
-            </div>
+            <!-- PRAWY PANEL: KONSOLA STEROWANIA -->
+            <div class="nav-panel-right">
+                <!-- Telemetria i status klucza -->
+                <div class="nav-hud-row">
+                    <span>SYSTEM: <strong style="color: var(--term-fg);">AUTOPILOT</strong></span>
+                    <span id="navHudKeyBadge">
+                        ${stage === 2 
+                            ? `<span class="nav-hud-badge ${keyCollected ? 'ok' : 'req'}" id="navHudKey">${keyCollected ? 'KLUCZ: POBRANY [OK]' : 'KLUCZ: WYMAGANY'}</span>`
+                            : `<span class="nav-hud-badge ok">KOD: GOTOWY</span>`
+                        }
+                    </span>
+                </div>
 
-            <!-- Klawiatura strzałek -->
-            <div style="display: grid; grid-template-columns: repeat(3, 70px); grid-template-rows: repeat(2, 70px); gap: 10px; margin-bottom: 25px; justify-content: center;">
-                <div></div>
-                <button class="nav-btn" data-dir="UP" style="width: 100%; height: 100%; margin: 0; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;">▲</button>
-                <div></div>
-                <button class="nav-btn" data-dir="LEFT" style="width: 100%; height: 100%; margin: 0; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;">◀</button>
-                <button class="nav-btn" data-dir="DOWN" style="width: 100%; height: 100%; margin: 0; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;">▼</button>
-                <button class="nav-btn" data-dir="RIGHT" style="width: 100%; height: 100%; margin: 0; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;">▶</button>
-            </div>
+                <!-- Pamięć rozkazów (Matryca 24 slotów, 6x4, ZERO scrollbara) -->
+                <div>
+                    <div class="nav-seq-header">
+                        <span>PAMIĘĆ ROZKAZÓW</span>
+                        <span class="nav-seq-counter" id="navSeqCounter">0 / 24</span>
+                    </div>
+                    <div class="nav-seq-display" id="sequenceDisplay">
+                        <!-- 24 sloty renderowane przez JS -->
+                    </div>
+                </div>
 
-            <!-- Rząd akcji (Szerokość 508px dopasowana do ekranu sekwencji) -->
-            <div style="display: flex; gap: 10px; width: 100%; max-width: 508px;">
-                <button id="navExecuteBtn" style="flex: 1; min-height: 55px; background: var(--term-fg); color: var(--term-bg); border: none; font-size: 1.1rem; font-weight: bold; cursor: pointer;">URUCHOM SEKWENCJĘ</button>
-                <button id="navUndoBtn" style="width: 55px; height: 55px; background: var(--danger); color: var(--term-bg); border: none; font-size: 1.5rem; display: flex; justify-content: center; align-items: center; cursor: pointer; flex-shrink: 0; border-radius: 4px;">⌫</button>
-            </div>
+                <!-- Klawiatura strzałek -->
+                <div class="nav-keypad">
+                    <div></div>
+                    <button class="nav-btn" data-dir="UP" title="Kierunek GÓRA (W / Strzałka w górę)">▲</button>
+                    <div></div>
+                    <button class="nav-btn" data-dir="LEFT" title="Kierunek LEWO (A / Strzałka w lewo)">◀</button>
+                    <button class="nav-btn" data-dir="DOWN" title="Kierunek DÓŁ (S / Strzałka w dół)">▼</button>
+                    <button class="nav-btn" data-dir="RIGHT" title="Kierunek PRAWO (D / Strzałka w prawo)">▶</button>
+                </div>
 
-            <p id="navFeedback" style="color: var(--danger); margin-top: 10px; height: 20px; font-weight: bold; text-align: center; font-size: 0.9rem;"></p>
+                <!-- Rząd akcji -->
+                <div class="nav-actions">
+                    <button id="navExecuteBtn" class="nav-exec-btn" title="Uruchom sekwencję (Enter / Spacja)">START SEKWENCJI</button>
+                    <button id="navUndoBtn" class="nav-icon-btn" title="Cofnij ostatnią komendę (Backspace)">⌫</button>
+                    <button id="navClearBtn" class="nav-icon-btn danger" title="Wyczyść całą sekwencję (Delete / Escape)">✕</button>
+                </div>
+
+                <div class="nav-hint-bar">
+                    KLAWIATURA: [W,A,S,D / STRZAŁKI] | [ENTER] START | [BKSP] | [ESC]
+                </div>
+
+                <p id="navFeedback" class="nav-feedback"></p>
+            </div>
         </div>
     `;
     container.innerHTML = html;
 
     const cells = document.querySelectorAll('.nav-cell');
+    const navGrid = document.getElementById('navGrid');
     const seqDisplay = document.getElementById('sequenceDisplay');
+    const seqCounter = document.getElementById('navSeqCounter');
     const executeBtn = document.getElementById('navExecuteBtn');
     const undoBtn = document.getElementById('navUndoBtn');
+    const clearBtn = document.getElementById('navClearBtn');
     const feedback = document.getElementById('navFeedback');
+    const coordShipEl = document.getElementById('navCoordShip');
+    const hudKeyEl = document.getElementById('navHudKey');
 
-    // Zamienia współrzędne x,y na indeks w tablicy komórek
+    // Czyszczenie timera i listenera klawiatury przy zmianie modułu
+    window.activeGameCleanup = () => {
+        if (interval) clearInterval(interval);
+        window.removeEventListener('keydown', handleKeyDown);
+    };
+
     function getIndex(x, y) { return y * size + x; }
 
-    // Rysuje siatkę: ściany, klucz, cel i aktualną pozycję statku
+    function updateHud() {
+        if (coordShipEl) coordShipEl.textContent = getCoordLabel(currentShipPos);
+        if (hudKeyEl && stage === 2) {
+            if (keyCollected) {
+                hudKeyEl.className = 'nav-hud-badge ok';
+                hudKeyEl.textContent = 'KLUCZ: POBRANY [OK]';
+            } else {
+                hudKeyEl.className = 'nav-hud-badge req';
+                hudKeyEl.textContent = 'KLUCZ: WYMAGANY';
+            }
+        }
+    }
+
+    // Rysuje stan mapy radaru
     function drawMap() {
-        cells.forEach(c => {
+        cells.forEach((c, idx) => {
+            const x = idx % size;
+            const y = Math.floor(idx / size);
+            c.className = 'nav-cell';
             c.innerHTML = '';
-            c.style.background = 'var(--term-dim)';
-            c.style.color = 'var(--term-fg)';
-            c.style.textShadow = 'none';
+
+            if (visitedCells.has(`${x},${y}`) && !(currentShipPos.x === x && currentShipPos.y === y)) {
+                c.classList.add('nav-cell-trail');
+            }
         });
 
+        // Przeszkody
         walls.forEach(w => {
             let idx = getIndex(w.x, w.y);
-            cells[idx].innerHTML = 'X';
-            cells[idx].style.color = 'var(--danger)';
-            cells[idx].style.background = '#2a0000';
+            cells[idx].className = 'nav-cell nav-cell-wall';
+            cells[idx].innerHTML = '✕';
         });
 
+        // Klucz (Etap 2)
         if (keyPos && !keyCollected) {
             let idx = getIndex(keyPos.x, keyPos.y);
-            cells[idx].innerHTML = 'K';
-            cells[idx].style.color = '#ffeb3b';
-            cells[idx].style.textShadow = '0 0 10px #ffeb3b';
+            cells[idx].className = 'nav-cell nav-cell-key';
+            cells[idx].innerHTML = '<span style="color: #facc15; font-size: 1.4rem;">🔑</span>';
         }
 
+        // Baza / Cel
         let targetIdx = getIndex(targetPos.x, targetPos.y);
-        cells[targetIdx].innerHTML = 'B';
-        cells[targetIdx].style.color = 'var(--success)';
-        cells[targetIdx].style.textShadow = '0 0 10px var(--success)';
+        cells[targetIdx].className = 'nav-cell nav-cell-target';
+        cells[targetIdx].innerHTML = '<span style="color: var(--success); font-size: 1.4rem;">⌖</span>';
 
-        let shipIdx = getIndex(currentShipPos.x, currentShipPos.y);
-        cells[shipIdx].innerHTML = '►';
-        cells[shipIdx].style.color = '#fff';
-        cells[shipIdx].style.textShadow = '0 0 10px #fff';
-        cells[shipIdx].style.background = 'var(--term-fg)'; 
-    }
-
-    // Odświeża podgląd wprowadzonej sekwencji komend
-    function updateSequenceDisplay() {
-        if (sequence.length === 0) {
-            seqDisplay.innerHTML = '<span style="color: #444; font-size: 0.9rem;">[OCZEK. NA KOMENDY]</span>';
-        } else {
-            seqDisplay.innerHTML = sequence.map(d => `
-                <div style="width: 35px; height: 35px; box-sizing: border-box; border: 1px solid var(--term-fg); background: var(--term-dim); color: var(--term-fg); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: inset 0 0 8px rgba(30,231,255,0.2);">
-                    ${dirSymbols[d]}
-                </div>
-            `).join('');
+        // Statek
+        if (currentShipPos.x >= 0 && currentShipPos.x < size && currentShipPos.y >= 0 && currentShipPos.y < size) {
+            let shipIdx = getIndex(currentShipPos.x, currentShipPos.y);
+            cells[shipIdx].classList.add('nav-cell-ship');
+            cells[shipIdx].innerHTML = `<span class="nav-ship" style="transform: rotate(${shipAngle}deg);">▲</span>`;
         }
     }
 
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (isExecuting || sequence.length >= 24) return; 
-            sequence.push(btn.getAttribute('data-dir'));
-            updateSequenceDisplay();
-        });
-    });
+    // Odświeża sekwencję 24 slotów (6 kolumn x 4 wiersze) - brak scrollbara
+    function updateSequenceDisplay() {
+        if (seqCounter) {
+            seqCounter.textContent = `${sequence.length} / 24`;
+        }
 
-    undoBtn.addEventListener('click', () => {
+        let slotsHtml = '';
+        for (let i = 0; i < 24; i++) {
+            if (i < sequence.length) {
+                const dir = sequence[i];
+                let stateClass = '';
+                if (activeStepIndex === i) stateClass = 'active';
+                else if (activeStepIndex > i) stateClass = 'done';
+                slotsHtml += `<div class="nav-cmd-tile ${stateClass}">${dirSymbols[dir]}</div>`;
+            } else {
+                slotsHtml += `<div class="nav-cmd-slot-empty">·</div>`;
+            }
+        }
+        seqDisplay.innerHTML = slotsHtml;
+    }
+
+    function addCommand(dir) {
+        if (isExecuting || sequence.length >= 24) return;
+        sequence.push(dir);
+        updateSequenceDisplay();
+
+        const btn = container.querySelector(`.nav-btn[data-dir="${dir}"]`);
+        if (btn) {
+            btn.classList.add('key-pressed');
+            setTimeout(() => btn.classList.remove('key-pressed'), 120);
+        }
+    }
+
+    function undoCommand() {
         if (isExecuting || sequence.length === 0) return;
         sequence.pop();
         updateSequenceDisplay();
+
+        undoBtn.classList.add('key-pressed');
+        setTimeout(() => undoBtn.classList.remove('key-pressed'), 120);
+    }
+
+    function clearCommand() {
+        if (isExecuting || sequence.length === 0) return;
+        sequence = [];
+        updateSequenceDisplay();
+
+        clearBtn.classList.add('key-pressed');
+        setTimeout(() => clearBtn.classList.remove('key-pressed'), 120);
+    }
+
+    // Obsługa przycisków myszy
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            addCommand(btn.getAttribute('data-dir'));
+        });
     });
 
+    undoBtn.addEventListener('click', undoCommand);
+    clearBtn.addEventListener('click', clearCommand);
+
+    // Obsługa klawiatury
+    function handleKeyDown(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (isExecuting) return;
+
+        if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+            e.preventDefault();
+            addCommand('UP');
+        } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+            e.preventDefault();
+            addCommand('DOWN');
+        } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+            e.preventDefault();
+            addCommand('LEFT');
+        } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+            e.preventDefault();
+            addCommand('RIGHT');
+        } else if (e.key === 'Backspace') {
+            e.preventDefault();
+            undoCommand();
+        } else if (e.key === 'Delete' || e.key === 'Escape' || e.key === 'c' || e.key === 'C') {
+            e.preventDefault();
+            clearCommand();
+        } else if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            executeBtn.click();
+        }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Uruchomienie sekwencji
     executeBtn.addEventListener('click', () => {
         if (isExecuting || sequence.length === 0) return;
         isExecuting = true;
         feedback.textContent = "";
         executeBtn.disabled = true;
+        undoBtn.disabled = true;
+        clearBtn.disabled = true;
         
         currentShipPos = { ...startPos };
+        shipAngle = stage === 1 ? 0 : 90;
         keyCollected = stage === 1; 
+        visitedCells.clear();
+        visitedCells.add(`${startPos.x},${startPos.y}`);
+
+        activeStepIndex = 0;
+        updateHud();
         drawMap();
+        updateSequenceDisplay();
 
         let step = 0;
         
-        let interval = setInterval(() => {
+        interval = setInterval(() => {
             if (step >= sequence.length) {
                 clearInterval(interval);
+                interval = null;
+                activeStepIndex = -1;
+                updateSequenceDisplay();
                 
-                if (currentShipPos.x === targetPos.x && currentShipPos.y === targetPos.y && keyCollected) {
-                    feedback.style.color = 'var(--success)';
-                    feedback.textContent = "DOKOWANIE ZAKOŃCZONE SUKCESEM.";
-                    document.getElementById('navGrid').style.boxShadow = "0 0 30px rgba(34, 197, 94, 0.5)";
-                    document.getElementById('navGrid').style.borderColor = "var(--success)";
-                    setTimeout(() => winStage(moduleKey), 2000);
+                if (currentShipPos.x === targetPos.x && currentShipPos.y === targetPos.y) {
+                    if (keyCollected) {
+                        feedback.style.color = 'var(--success)';
+                        feedback.textContent = "DOKOWANIE ZAKOŃCZONE SUKCESEM.";
+                        navGrid.classList.add('success-flash');
+                        window.removeEventListener('keydown', handleKeyDown);
+                        setTimeout(() => winStage(moduleKey), 1800);
+                    } else {
+                        failRun("BŁĄD: BRAK KLUCZA AUTORYZACYJNEGO PRZED DOKOWANIEM!");
+                    }
                 } else {
-                    failRun("BŁĄD: NIE OSIĄGNIĘTO CELU LUB BRAK KLUCZA.");
+                    failRun("BŁĄD: NIE OSIĄGNIĘTO BAZY DOKUJĄCEJ!");
                 }
                 return;
             }
 
             let dir = sequence[step];
-            if (dir === 'UP') currentShipPos.y -= 1;
-            if (dir === 'DOWN') currentShipPos.y += 1;
-            if (dir === 'LEFT') currentShipPos.x -= 1;
-            if (dir === 'RIGHT') currentShipPos.x += 1;
+            if (dir === 'UP') { currentShipPos.y -= 1; shipAngle = 0; }
+            if (dir === 'DOWN') { currentShipPos.y += 1; shipAngle = 180; }
+            if (dir === 'LEFT') { currentShipPos.x -= 1; shipAngle = 270; }
+            if (dir === 'RIGHT') { currentShipPos.x += 1; shipAngle = 90; }
 
+            // Sprawdzenie kolizji z krawędzią sektora
             if (currentShipPos.x < 0 || currentShipPos.x >= size || currentShipPos.y < 0 || currentShipPos.y >= size) {
                 clearInterval(interval);
+                interval = null;
                 failRun("KRYTYCZNE USZKODZENIE: OPUSZCZONO SEKTOR!");
                 return;
             }
 
+            // Sprawdzenie kolizji z przeszkodą
             if (walls.some(w => w.x === currentShipPos.x && w.y === currentShipPos.y)) {
                 clearInterval(interval);
-                failRun("KRYTYCZNE USZKODZENIE: KOLIZJA Z OBIEKTEM!");
+                interval = null;
+                failRun(`KOLIZJA: SEKTOR [${getCoordLabel(currentShipPos)}] ZABLOKOWANY!`);
                 return;
             }
 
+            // Zebranie klucza (Etap 2)
             if (keyPos && currentShipPos.x === keyPos.x && currentShipPos.y === keyPos.y) {
                 keyCollected = true;
             }
 
-            drawMap();
+            visitedCells.add(`${currentShipPos.x},${currentShipPos.y}`);
             step++;
-        }, 350); 
+            activeStepIndex = step < sequence.length ? step : -1;
+            updateHud();
+            drawMap();
+            updateSequenceDisplay();
+        }, 320); 
     });
 
     // Obsługuje nieudaną próbę: pokazuje błąd i resetuje statek do pozycji startowej
@@ -1003,17 +1178,27 @@ function initNavigationGame(stage, moduleKey, container) {
         feedback.style.color = 'var(--danger)';
         feedback.textContent = msg;
         
-        document.getElementById('navGrid').style.borderColor = "var(--danger)";
+        navGrid.classList.add('error-flash');
+        activeStepIndex = -1;
+        updateSequenceDisplay();
+
         setTimeout(() => {
-            document.getElementById('navGrid').style.borderColor = "var(--term-fg)";
+            navGrid.classList.remove('error-flash');
             currentShipPos = { ...startPos }; 
+            shipAngle = stage === 1 ? 0 : 90;
             keyCollected = stage === 1;
-            drawMap();
+            visitedCells.clear();
+            visitedCells.add(`${startPos.x},${startPos.y}`);
             isExecuting = false;
             executeBtn.disabled = false;
+            undoBtn.disabled = false;
+            clearBtn.disabled = false;
+            updateHud();
+            drawMap();
         }, 1500);
     }
 
+    updateHud();
     drawMap();
 }
 
@@ -1025,6 +1210,11 @@ document.getElementById('endMissionBtn').addEventListener('click', () => {
         'Czy na pewno chcesz zakończyć misję?\n\nModuły zostaną zablokowane, a wynik zapisany jako ostateczny. Tej operacji nie można cofnąć.'
     );
     if (!confirmed) return;
+
+    if (typeof window.activeGameCleanup === 'function') {
+        try { window.activeGameCleanup(); } catch(e) {}
+        window.activeGameCleanup = null;
+    }
 
     const D = parseInt(currentTeam, 10);
     const P = totalPoints;

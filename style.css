@@ -235,3 +235,444 @@ button:hover {
   line-height: 1.6; 
   margin-top: 15px; 
 }
+
+/* --- NAWIGACJA (AUTOPILOT) - NOWY UKŁAD DWUPANELOWY --- */
+.nav-container-2col {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  width: 100%;
+  max-width: 940px;
+  user-select: none;
+}
+
+/* LEWY PANEL: RADAR TAKTYCZNY */
+.nav-panel-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nav-radar-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.nav-coord-cols {
+  display: grid;
+  grid-template-columns: 28px repeat(6, 62px);
+  gap: 6px;
+  width: 100%;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--term-fg);
+  opacity: 0.75;
+  margin-bottom: 6px;
+  font-weight: bold;
+}
+
+.nav-grid-row-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.nav-coord-rows {
+  display: grid;
+  grid-template-rows: repeat(6, 62px);
+  gap: 6px;
+  width: 28px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--term-fg);
+  opacity: 0.75;
+  font-weight: bold;
+  line-height: 62px;
+}
+
+.nav-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 62px);
+  grid-template-rows: repeat(6, 62px);
+  gap: 6px;
+  transition: box-shadow 0.3s ease;
+}
+
+.nav-grid.error-flash {
+  box-shadow: 0 0 30px rgba(255, 68, 68, 0.6);
+}
+
+.nav-grid.success-flash {
+  box-shadow: 0 0 35px rgba(34, 197, 94, 0.7);
+}
+
+.nav-cell {
+  width: 62px;
+  height: 62px;
+  background: var(--term-dim);
+  border: 1px solid rgba(30, 231, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.5rem;
+  box-sizing: border-box;
+  position: relative;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.nav-cell-trail::after {
+  content: "•";
+  color: var(--term-fg);
+  opacity: 0.45;
+  font-size: 2.2rem;
+  position: absolute;
+  pointer-events: none;
+}
+
+.nav-cell-wall {
+  background: #250202 !important;
+  color: var(--danger) !important;
+  border-color: rgba(255, 68, 68, 0.45) !important;
+  text-shadow: 0 0 8px var(--danger);
+}
+
+.nav-cell-target {
+  border-color: var(--success) !important;
+  box-shadow: inset 0 0 12px rgba(34, 197, 94, 0.35);
+  animation: targetPulse 1.8s infinite;
+}
+
+@keyframes targetPulse {
+  0%, 100% { border-color: var(--success); box-shadow: inset 0 0 10px rgba(34, 197, 94, 0.3); }
+  50% { border-color: #4ade80; box-shadow: inset 0 0 20px rgba(34, 197, 94, 0.6); }
+}
+
+.nav-cell-key {
+  border-color: #facc15 !important;
+  animation: keyGlow 1.5s infinite alternate;
+}
+
+@keyframes keyGlow {
+  0% { text-shadow: 0 0 6px #facc15; }
+  100% { text-shadow: 0 0 16px #fef08a, 0 0 25px #facc15; }
+}
+
+.nav-ship {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: #ffffff;
+  font-size: 1.7rem;
+  text-shadow: 0 0 12px var(--term-fg), 0 0 22px #ffffff;
+  transition: transform 0.2s ease-out;
+}
+
+.nav-radar-telemetry {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 400px;
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: var(--term-fg);
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+/* PRAWY PANEL: KONSOLA STEROWANIA I SEKWENCJI */
+.nav-panel-right {
+  width: 360px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: rgba(0, 26, 42, 0.4);
+  border: 1px solid rgba(30, 231, 255, 0.4);
+  padding: 14px 16px;
+  box-sizing: border-box;
+  box-shadow: inset 0 0 20px rgba(30, 231, 255, 0.08);
+}
+
+.nav-hud-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px dashed rgba(30, 231, 255, 0.35);
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  font-size: 0.78rem;
+  font-weight: bold;
+}
+
+.nav-hud-badge {
+  padding: 3px 8px;
+  border-radius: 2px;
+  font-size: 0.75rem;
+}
+.nav-hud-badge.req {
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+.nav-hud-badge.ok {
+  color: var(--success);
+  border: 1px solid var(--success);
+  text-shadow: 0 0 6px var(--success);
+}
+
+.nav-seq-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  font-size: 0.78rem;
+  font-weight: bold;
+  color: var(--term-fg);
+  margin-bottom: 6px;
+  letter-spacing: 1px;
+}
+
+.nav-seq-counter {
+  color: var(--term-fg);
+  opacity: 0.9;
+}
+
+/* Matryca sekwencji: 6 kolumn x 4 wiersze = 24 sloty, BRAK SCROLLBARA */
+.nav-seq-display {
+  width: 100%;
+  height: 142px;
+  background: #000407;
+  border: 1px dashed var(--term-fg);
+  padding: 6px;
+  box-sizing: border-box;
+  margin-bottom: 14px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(4, 28px);
+  gap: 5px;
+  overflow: hidden; /* Zapewnia całkowity brak paska przewijania */
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.nav-cmd-tile {
+  box-sizing: border-box;
+  border: 1px solid var(--term-fg);
+  background: var(--term-dim);
+  color: var(--term-fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  box-shadow: inset 0 0 6px rgba(30, 231, 255, 0.2);
+  transition: all 0.15s ease;
+}
+
+.nav-cmd-tile.active {
+  background: var(--term-fg);
+  color: var(--term-bg);
+  box-shadow: 0 0 12px var(--term-fg), 0 0 18px #ffffff;
+  transform: scale(1.1);
+  font-weight: bold;
+  z-index: 2;
+}
+
+.nav-cmd-tile.done {
+  opacity: 0.3;
+  border-color: #445;
+  color: #778;
+  background: #000c14;
+}
+
+.nav-cmd-slot-empty {
+  box-sizing: border-box;
+  border: 1px dashed rgba(30, 231, 255, 0.15);
+  background: transparent;
+  color: rgba(30, 231, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+/* Klawiatura strzałek */
+.nav-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 56px);
+  grid-template-rows: repeat(2, 44px);
+  gap: 8px;
+  margin-bottom: 12px;
+  justify-content: center;
+}
+
+.nav-btn {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+  font-size: 1.3rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  border: 1px solid var(--term-fg) !important;
+  background: var(--term-dim) !important;
+  color: var(--term-fg) !important;
+  transition: transform 0.08s ease, background 0.08s ease !important;
+}
+
+.nav-btn:hover {
+  background: var(--term-fg) !important;
+  color: var(--term-bg) !important;
+}
+
+.nav-btn:active, .nav-btn.key-pressed {
+  transform: scale(0.92);
+  background: #ffffff !important;
+  color: var(--term-bg) !important;
+}
+
+/* Rząd akcji */
+.nav-actions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.nav-exec-btn {
+  flex: 1;
+  min-height: 46px !important;
+  background: var(--term-fg) !important;
+  color: var(--term-bg) !important;
+  border: none !important;
+  font-size: 0.95rem !important;
+  font-weight: bold !important;
+  cursor: pointer !important;
+  letter-spacing: 1px;
+  transition: all 0.15s ease;
+  width: auto !important;
+  margin: 0 !important;
+}
+
+.nav-exec-btn:hover:not(:disabled) {
+  box-shadow: 0 0 15px var(--term-fg);
+}
+
+.nav-exec-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(60%);
+}
+
+.nav-icon-btn {
+  width: 46px !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  border: 1px solid var(--term-fg) !important;
+  color: var(--term-fg) !important;
+  background: var(--term-dim) !important;
+  font-size: 1.2rem !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.nav-icon-btn:hover:not(:disabled) {
+  background: var(--term-fg) !important;
+  color: var(--term-bg) !important;
+}
+
+.nav-icon-btn.danger {
+  border-color: var(--danger) !important;
+  color: var(--danger) !important;
+}
+
+.nav-icon-btn.danger:hover:not(:disabled) {
+  background: var(--danger) !important;
+  color: var(--term-bg) !important;
+}
+
+.nav-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.nav-hint-bar {
+  font-size: 0.65rem;
+  color: var(--term-fg);
+  opacity: 0.65;
+  text-align: center;
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+}
+
+.nav-feedback {
+  margin-top: 6px;
+  min-height: 20px;
+  font-weight: bold;
+  text-align: center;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 1500px) {
+  .nav-container-2col {
+    gap: 20px;
+  }
+  .nav-coord-cols {
+    grid-template-columns: 24px repeat(6, 54px);
+    gap: 5px;
+  }
+  .nav-coord-rows {
+    grid-template-rows: repeat(6, 54px);
+    gap: 5px;
+    width: 24px;
+    line-height: 54px;
+  }
+  .nav-grid {
+    grid-template-columns: repeat(6, 54px);
+    grid-template-rows: repeat(6, 54px);
+    gap: 5px;
+  }
+  .nav-cell {
+    width: 54px;
+    height: 54px;
+    font-size: 1.35rem;
+  }
+  .nav-panel-right {
+    width: 320px;
+    padding: 10px 12px;
+  }
+  .nav-seq-display {
+    height: 136px;
+    grid-template-rows: repeat(4, 26px);
+    gap: 4px;
+  }
+  .nav-keypad {
+    grid-template-columns: repeat(3, 50px);
+    grid-template-rows: repeat(2, 40px);
+    gap: 6px;
+  }
+  .nav-btn {
+    min-height: 40px !important;
+    font-size: 1.2rem !important;
+  }
+  .nav-exec-btn {
+    min-height: 42px !important;
+    font-size: 0.88rem !important;
+  }
+  .nav-icon-btn {
+    width: 42px !important;
+    height: 42px !important;
+    min-height: 42px !important;
+  }
+}
