@@ -101,8 +101,9 @@ body::after {
   display: flex;
 }
 
-/* --- LOGIN SCREEN --- */
-#loginScreen {
+/* --- LOGIN & END SCREEN --- */
+#loginScreen,
+#endScreen {
   justify-content: center;
   align-items: center;
 }
@@ -142,6 +143,17 @@ input {
 input:focus {
   outline: none;
   background: #002c44;
+}
+
+/* Ukrycie strzałek w polu typu number */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 button {
@@ -811,6 +823,121 @@ body.logged-in .crt-toggle-btn,
   background: var(--term-fg) !important;
   color: var(--term-bg) !important;
 }
+
+/* --- MODAL ZAKOŃCZENIA MISJI (CZERWONY RETRO-TERMINAL) --- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 20000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.end-modal-panel {
+  background: #100202;
+  border: 2px solid var(--danger);
+  box-shadow: 0 0 35px rgba(255, 68, 68, 0.5), inset 0 0 25px rgba(255, 68, 68, 0.25);
+  padding: 30px;
+  max-width: 580px;
+  width: 100%;
+  text-align: center;
+  animation: terminalRender 0.2s ease-out;
+}
+
+.modal-badge-danger {
+  color: var(--danger);
+  font-weight: bold;
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+  animation: blink 1.2s infinite;
+  text-shadow: 0 0 10px rgba(255, 68, 68, 0.8);
+}
+
+.end-modal-title {
+  color: #fff;
+  background: var(--danger);
+  margin: 0 0 20px 0;
+  padding: 10px;
+  font-size: 1.5rem;
+  letter-spacing: 3px;
+  text-shadow: none;
+}
+
+.end-modal-warning {
+  color: #ffcccc;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  margin-bottom: 25px;
+  text-shadow: 0 0 5px rgba(255, 68, 68, 0.5);
+}
+
+.end-modal-highlight {
+  display: block;
+  margin-top: 15px;
+  color: var(--danger);
+  font-weight: bold;
+  font-size: 1.15rem;
+  letter-spacing: 1px;
+  text-shadow: 0 0 10px rgba(255, 68, 68, 0.9);
+}
+
+.end-modal-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.end-modal-cancel {
+  flex: 1;
+  background: transparent;
+  color: var(--term-fg) !important;
+  border: 1px solid var(--term-fg) !important;
+  font-size: 0.95rem;
+  padding: 14px 10px;
+  cursor: pointer;
+  margin: 0 !important;
+  width: auto !important;
+  min-height: 48px;
+  transition: all 0.2s;
+  box-shadow: none !important;
+}
+.end-modal-cancel:hover {
+  background: var(--term-fg) !important;
+  color: var(--term-bg) !important;
+  text-shadow: none;
+}
+
+.end-modal-confirm {
+  flex: 1;
+  background: var(--danger) !important;
+  color: #000 !important;
+  border: 2px solid var(--danger) !important;
+  font-weight: bold;
+  font-size: 0.95rem;
+  padding: 14px 10px;
+  cursor: pointer;
+  margin: 0 !important;
+  width: auto !important;
+  min-height: 48px;
+  box-shadow: 0 0 15px rgba(255, 68, 68, 0.6) !important;
+  text-shadow: none !important;
+  transition: all 0.2s;
+}
+.end-modal-confirm:hover {
+  background: #ff7777 !important;
+  border-color: #ff7777 !important;
+  box-shadow: 0 0 25px rgba(255, 68, 68, 0.9) !important;
+}
+
 
 
 /* --- DOSTĘPNOŚĆ (ACCESSIBILITY) I RĘCZNY WYŁĄCZNIK --- */

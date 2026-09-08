@@ -41,9 +41,10 @@ function computeEmergencyPassword(teamNumberStr) {
     const afterSort = parseInt(sorted.join(''), 10);
 
     // Krok 4 i 5: dodaj dzisiejszy dzień miesiąca, odejmij numer dzisiejszego miesiąca
-    // (bieżąca data systemowa - drużyny rozwiązują to na żywo w dniu gry)
-    const today = new Date();
-    const N = afterSort + today.getDate() - (today.getMonth() + 1);
+    // Data zhardkodowana na 25.09 (dzień = 25, miesiąc = 9)
+    const day = 25;
+    const month = 9;
+    const N = afterSort + day - month;
 
     // Krok 6: litera z sumy cyfr N
     const letterEnd = letterFromNumber(sumDigits(N));
@@ -52,9 +53,23 @@ function computeEmergencyPassword(teamNumberStr) {
 }
 
 // --- LOGOWANIE ---
+const teamInputElem = document.getElementById('teamInput');
+
+// Blokada wprowadzania znaku minus i wartości ujemnych
+teamInputElem.addEventListener('keydown', (e) => {
+    if (e.key === '-' || e.key === 'Subtract') {
+        e.preventDefault();
+    }
+});
+teamInputElem.addEventListener('input', () => {
+    if (teamInputElem.value && Number(teamInputElem.value) < 0) {
+        teamInputElem.value = '';
+    }
+});
+
 document.getElementById('verifyTeamBtn').addEventListener('click', () => {
-    const teamInput = document.getElementById('teamInput').value.trim();
-    if (teamInput.length > 0 && !isNaN(teamInput)) {
+    const teamInput = teamInputElem.value.trim();
+    if (teamInput.length > 0 && !isNaN(teamInput) && Number(teamInput) >= 0) {
         currentTeam = teamInput;
         document.getElementById('displayTeam').textContent = currentTeam;
         document.getElementById('step1').style.display = 'none';
@@ -161,8 +176,8 @@ function loadGame(moduleKey) {
     // Dynamiczne intruckje dla poszczególnych mini-gierek
     if (moduleKey === 'nav') {
         setInstr(`<strong>CEL:</strong> Zaprogramuj trasę lotu.<br><br>
-        Wprowadź sekwencję komend napędowych (strzałek), aby ominąć przeszkody <strong>[X]</strong> i zadokować w bazie <strong>[B]</strong>.<br><br>
-        <em>Poziom 2: Zbierz klucz autoryzacyjny <strong>[K]</strong> przed dokowaniem.</em>`);
+        Wprowadź sekwencję komend napędowych (strzałek), aby ominąć przeszkody <strong>[✕]</strong> i zadokować w bazie <strong>[⌖]</strong>.<br><br>
+        <em>Poziom 2: Zbierz klucz autoryzacyjny <strong>[🔑]</strong>, aby odblokować bazę <strong>[🔒 ➔ ⌖]</strong> przed dokowaniem.</em>`);
         initNavigationGame(mod.currentStage, moduleKey, container);
     }
     else if (moduleKey === 'eng') {
@@ -392,10 +407,12 @@ function initPipesGame(moduleKey, container) {
     container.innerHTML = `
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%;">
             
-            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px;">
-                <!-- Wskaźnik WEJŚCIA umiejscowiony naturalnie obok siatki -->
-                <div style="color: var(--success); font-weight: bold; text-align: right; font-size: 1.2rem; text-shadow: 0 0 8px var(--success); margin-top: -200px;">
-                    IN &#10142;
+            <div style="display: flex; align-items: stretch; justify-content: center; gap: 15px; margin-bottom: 20px;">
+                <!-- Wskaźnik WEJŚCIA precyzyjnie wyrównany z 1. rzędem siatki -->
+                <div style="display: flex; flex-direction: column; justify-content: flex-start; padding-top: 12px; box-sizing: border-box;">
+                    <div style="height: 55px; display: flex; align-items: center; justify-content: flex-end; color: var(--success); font-weight: bold; font-size: 1.15rem; text-shadow: 0 0 8px var(--success); white-space: nowrap;">
+                        [O2 IN] &#10142;
+                    </div>
                 </div>
                 
                 <!-- Siatka 5x5 -->
@@ -410,9 +427,11 @@ function initPipesGame(moduleKey, container) {
                     }).join('')}
                 </div>
 
-                <!-- Wskaźnik WYJŚCIA -->
-                <div style="color: var(--success); font-weight: bold; text-align: left; font-size: 1.2rem; text-shadow: 0 0 8px var(--success); margin-top: 200px;">
-                    &#10142; OUT
+                <!-- Wskaźnik WYJŚCIA precyzyjnie wyrównany z 5. rzędem siatki -->
+                <div style="display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 12px; box-sizing: border-box;">
+                    <div style="height: 55px; display: flex; align-items: center; justify-content: flex-start; color: var(--success); font-weight: bold; font-size: 1.15rem; text-shadow: 0 0 8px var(--success); white-space: nowrap;">
+                        &#10142; [OUT]
+                    </div>
                 </div>
             </div>
 
@@ -1233,11 +1252,20 @@ function initNavigationGame(stage, moduleKey, container) {
 // --- KOD ZAKOŃCZENIA MISJI ---
 // X: litera kontrolna zależna tylko od numeru drużyny (0 = A, 1 = B ... 25 = Z)
 // L: liczba zależna od numeru drużyny i zdobytych punktów
+const endMissionModal = document.getElementById('endMissionModal');
+const cancelEndMissionBtn = document.getElementById('cancelEndMissionBtn');
+const confirmEndMissionBtn = document.getElementById('confirmEndMissionBtn');
+
 document.getElementById('endMissionBtn').addEventListener('click', () => {
-    const confirmed = confirm(
-        'Czy na pewno chcesz zakończyć misję?\n\nModuły zostaną zablokowane, a wynik zapisany jako ostateczny. Tej operacji nie można cofnąć.'
-    );
-    if (!confirmed) return;
+    endMissionModal.style.display = 'flex';
+});
+
+cancelEndMissionBtn.addEventListener('click', () => {
+    endMissionModal.style.display = 'none';
+});
+
+confirmEndMissionBtn.addEventListener('click', () => {
+    endMissionModal.style.display = 'none';
 
     if (typeof window.activeGameCleanup === 'function') {
         try { window.activeGameCleanup(); } catch(e) {}
