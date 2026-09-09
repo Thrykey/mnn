@@ -846,9 +846,9 @@ body.logged-in .crt-toggle-btn,
 }
 
 .end-modal-panel {
-  background: #100202;
-  border: 2px solid var(--danger);
-  box-shadow: 0 0 35px rgba(255, 68, 68, 0.5), inset 0 0 25px rgba(255, 68, 68, 0.25);
+  background: #1a0f00;
+  border: 2px solid #ff9800;
+  box-shadow: 0 0 35px rgba(255, 152, 0, 0.4), inset 0 0 25px rgba(255, 152, 0, 0.2);
   padding: 30px;
   max-width: 580px;
   width: 100%;
@@ -856,19 +856,19 @@ body.logged-in .crt-toggle-btn,
   animation: terminalRender 0.2s ease-out;
 }
 
-.modal-badge-danger {
-  color: var(--danger);
+.modal-badge-warning {
+  color: #ff9800;
   font-weight: bold;
   font-size: 1.1rem;
   letter-spacing: 2px;
   margin-bottom: 12px;
-  animation: blink 1.2s infinite;
-  text-shadow: 0 0 10px rgba(255, 68, 68, 0.8);
+  animation: blink 2s infinite;
+  text-shadow: 0 0 10px rgba(255, 152, 0, 0.8);
 }
 
 .end-modal-title {
   color: #fff;
-  background: var(--danger);
+  background: #ff9800;
   margin: 0 0 20px 0;
   padding: 10px;
   font-size: 1.5rem;
@@ -877,21 +877,21 @@ body.logged-in .crt-toggle-btn,
 }
 
 .end-modal-warning {
-  color: #ffcccc;
+  color: #ffe0b2;
   font-size: 1.05rem;
   line-height: 1.7;
   margin-bottom: 25px;
-  text-shadow: 0 0 5px rgba(255, 68, 68, 0.5);
+  text-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
 }
 
 .end-modal-highlight {
   display: block;
   margin-top: 15px;
-  color: var(--danger);
+  color: #ff9800;
   font-weight: bold;
   font-size: 1.15rem;
   letter-spacing: 1px;
-  text-shadow: 0 0 10px rgba(255, 68, 68, 0.9);
+  text-shadow: 0 0 10px rgba(255, 152, 0, 0.9);
 }
 
 .end-modal-buttons {
@@ -922,9 +922,9 @@ body.logged-in .crt-toggle-btn,
 
 .end-modal-confirm {
   flex: 1;
-  background: var(--danger) !important;
+  background: #ff9800 !important;
   color: #000 !important;
-  border: 2px solid var(--danger) !important;
+  border: 2px solid #ff9800 !important;
   font-weight: bold;
   font-size: 0.95rem;
   padding: 14px 10px;
@@ -932,14 +932,14 @@ body.logged-in .crt-toggle-btn,
   margin: 0 !important;
   width: auto !important;
   min-height: 48px;
-  box-shadow: 0 0 15px rgba(255, 68, 68, 0.6) !important;
+  box-shadow: 0 0 15px rgba(255, 152, 0, 0.6) !important;
   text-shadow: none !important;
   transition: all 0.2s;
 }
 .end-modal-confirm:hover {
-  background: #ff7777 !important;
-  border-color: #ff7777 !important;
-  box-shadow: 0 0 25px rgba(255, 68, 68, 0.9) !important;
+  background: #ffb74d !important;
+  border-color: #ffb74d !important;
+  box-shadow: 0 0 25px rgba(255, 152, 0, 0.9) !important;
 }
 
 

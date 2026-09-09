@@ -99,18 +99,31 @@
   <!-- MODAL POTWIERDZENIA ZAKOŃCZENIA MISJI -->
   <div id="endMissionModal" class="modal-overlay" style="display: none;">
     <div class="modal-panel end-modal-panel">
-      <div class="modal-badge-danger">⚠ KRYTYCZNA DECYZJA ⚠</div>
+      <div class="modal-badge-warning">⚠ POTWIERDZENIE ⚠</div>
       <h2 class="end-modal-title">ZAKOŃCZENIE MISJI</h2>
       <p class="end-modal-warning">
-        CZY NA PEWNO CHCESZ ZAKOŃCZYĆ MISJĘ?<br><br>
-        WSZYSTKIE MODUŁY ZOSTANĄ BEZPOWROTNIE ZABLOKOWANE.<br>
-        ZDOBYTE PUNKTY ZOSTANĄ ZATWIERDZONE JAKO WYNIK OSTATECZNY.<br>
-        <span class="end-modal-highlight">TEJ OPERACJI NIE MOŻNA COFNĄĆ!</span>
+        Czy na pewno chcesz zakończyć misję i zgłosić gotowość do ewakuacji?<br><br>
+        Zakończenie zablokuje możliwość dalszej naprawy modułów, a obecne punkty zostaną zatwierdzone jako wynik ostateczny.<br>
+        <span class="end-modal-highlight">Możesz bez problemu wrócić do kokpitu i kontynuować naprawę!</span>
       </p>
       <div class="end-modal-buttons">
         <button id="cancelEndMissionBtn" class="end-modal-cancel">POWRÓT DO KOKPITU</button>
-        <button id="confirmEndMissionBtn" class="end-modal-confirm">POTWIERDŹ ZAKOŃCZENIE</button>
+        <button id="confirmEndMissionBtn" class="end-modal-confirm">ZAKOŃCZ MISJĘ</button>
       </div>
+    </div>
+  </div>
+
+  <!-- KONSOLA HOSTA (LOWKEY TERMINAL) -->
+  <div id="hostConsoleTerminal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; background: rgba(0, 5, 8, 0.98); border-bottom: 1px solid var(--term-fg); z-index: 30000; padding: 10px 20px; font-family: 'Courier New', Courier, monospace; color: var(--term-fg); box-sizing: border-box; text-transform: none;">
+    <div style="max-width: 1000px; margin: 0 auto; display: flex; align-items: center; gap: 20px; font-size: 0.9rem;">
+      <div style="opacity: 0.7; white-space: nowrap;">
+        [SYS_ROOT] Team: <span id="hostTeamName">---</span> | Pkt: <span id="hostTotalPoints">0</span>/9
+      </div>
+      <div style="flex-grow: 1; display: flex; align-items: center; gap: 10px;">
+        <span style="font-weight: bold; color: var(--danger);">root@hal:~$</span>
+        <input type="text" id="hostCommandInput" autocomplete="off" spellcheck="false" style="background: transparent; border: none; color: var(--term-fg); font-family: 'Courier New', Courier, monospace; font-size: 1rem; flex-grow: 1; outline: none; margin: 0; padding: 0; box-shadow: none; text-shadow: none; height: auto; min-height: 0; text-transform: lowercase;">
+      </div>
+      <div id="hostConsoleFeedback" style="color: var(--success); font-size: 0.85rem; white-space: nowrap; min-width: 150px; text-align: right; font-weight: bold;"></div>
     </div>
   </div>
 

@@ -191,7 +191,7 @@ function loadGame(moduleKey) {
         initPipesGame(moduleKey, container);
     }
     else if (moduleKey === 'comm') {
-        setInstr(`<strong>CEL:</strong> Skrosuj przewody nadajnika.<br><br>
+        setInstr(`<strong>CEL:</strong> Połącz przewody nadajnika.<br><br>
         Połącz ze sobą świecące węzły tego samego koloru, przeciągając po ekranie. Ścieżki danych <strong>nie mogą się przecinać</strong>, a każdy węzeł musi zostać podłączony do swojej pary.`);
         initTransmitterGame(moduleKey, container);
     }
@@ -1315,3 +1315,85 @@ crtToggleBtn.addEventListener('click', () => {
         crtToggleBtn.textContent = 'WYŁĄCZ EFEKTY CRT';
     }
 });
+
+// --- KONSOLA HOSTA ---
+const hostConsoleTerminal = document.getElementById('hostConsoleTerminal');
+const hostCommandInput = document.getElementById('hostCommandInput');
+const hostConsoleFeedback = document.getElementById('hostConsoleFeedback');
+let hostConsoleOpen = false;
+
+window.addEventListener('keydown', (e) => {
+    // Skrót Ctrl + Shift + H
+    if (e.ctrlKey && e.shiftKey && (e.key === 'H' || e.key === 'h')) {
+        e.preventDefault();
+        toggleHostConsole();
+    }
+    
+    if (!hostConsoleOpen) return;
+
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        toggleHostConsole(false);
+    }
+    
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        executeHostCommand();
+    }
+});
+
+function toggleHostConsole(forceState) {
+    hostConsoleOpen = forceState !== undefined ? forceState : !hostConsoleOpen;
+
+    if (hostConsoleOpen) {
+        document.getElementById('hostTeamName').textContent = currentTeam || 'None';
+        document.getElementById('hostTotalPoints').textContent = totalPoints;
+        hostCommandInput.value = '';
+        hostConsoleFeedback.textContent = '';
+        hostConsoleTerminal.style.display = 'block';
+        setTimeout(() => hostCommandInput.focus(), 50);
+    } else {
+        hostConsoleTerminal.style.display = 'none';
+        hostCommandInput.blur();
+    }
+}
+
+function executeHostCommand() {
+    const cmd = hostCommandInput.value.trim().toLowerCase();
+    
+    // Obsługa różnych komend dla elastyczności
+    if (cmd === 'sub 1' || cmd === 'rm 1' || cmd === '-1' || cmd === 'sudo sub 1') {
+        if (totalPoints > 0) {
+            totalPoints--;
+            updateUI();
+            document.getElementById('hostTotalPoints').textContent = totalPoints;
+            hostConsoleFeedback.style.color = 'var(--success)';
+            hostConsoleFeedback.textContent = "OK: -1 PKT";
+        } else {
+            hostConsoleFeedback.style.color = 'var(--danger)';
+            hostConsoleFeedback.textContent = "ERR: MIN 0 PKT";
+        }
+    } else if (cmd === 'add 1' || cmd === '+1' || cmd === 'sudo add 1') {
+        if (totalPoints < 9) {
+            totalPoints++;
+            updateUI();
+            document.getElementById('hostTotalPoints').textContent = totalPoints;
+            hostConsoleFeedback.style.color = 'var(--success)';
+            hostConsoleFeedback.textContent = "OK: +1 PKT";
+        } else {
+            hostConsoleFeedback.style.color = 'var(--danger)';
+            hostConsoleFeedback.textContent = "ERR: MAX 9 PKT";
+        }
+    } else if (cmd === 'exit' || cmd === 'quit' || cmd === 'close') {
+        toggleHostConsole(false);
+        return;
+    } else if (cmd === 'clear') {
+        hostConsoleFeedback.textContent = '';
+    } else {
+        hostConsoleFeedback.style.color = 'var(--danger)';
+        hostConsoleFeedback.textContent = "ERR: UNKNOWN CMD";
+    }
+    
+    hostCommandInput.value = '';
+    setTimeout(() => hostCommandInput.focus(), 10);
+}
