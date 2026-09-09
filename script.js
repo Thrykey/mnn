@@ -869,6 +869,8 @@ function initNavigationGame(stage, moduleKey, container) {
             {x:2,y:4}, {x:2,y:5},            
             {x:4,y:2}, {x:4,y:3}, {x:4,y:4}  
           ];
+          
+    let lockedGates = stage === 2 ? [{x:3,y:4}, {x:5,y:2}] : [];
 
     let currentShipPos = { ...startPos };
     let shipAngle = stage === 1 ? 0 : 90; // 0: góra, 90: prawo
@@ -1029,16 +1031,19 @@ function initNavigationGame(stage, moduleKey, container) {
             cells[idx].innerHTML = '<span style="color: #facc15; font-size: 1.4rem;">🔑</span>';
         }
 
-        // Baza / Cel (Zablokowana dopóki nie zostanie zebrany klucz)
+        // Zablokowane bramy
+        lockedGates.forEach(g => {
+            if (!keyCollected) {
+                let idx = getIndex(g.x, g.y);
+                cells[idx].className = 'nav-cell nav-cell-target-locked';
+                cells[idx].innerHTML = '<span class="nav-target-lock-icon" title="Brama zablokowana - pobierz klucz autoryzacyjny">🔒</span>';
+            }
+        });
+
+        // Baza / Cel
         let targetIdx = getIndex(targetPos.x, targetPos.y);
-        const isLocked = keyPos && !keyCollected;
-        if (isLocked) {
-            cells[targetIdx].className = 'nav-cell nav-cell-target-locked';
-            cells[targetIdx].innerHTML = '<span class="nav-target-lock-icon" title="Baza zablokowana - pobierz klucz autoryzacyjny">🔒</span>';
-        } else {
-            cells[targetIdx].className = 'nav-cell nav-cell-target';
-            cells[targetIdx].innerHTML = '<span style="color: var(--success); font-size: 1.4rem;">⌖</span>';
-        }
+        cells[targetIdx].className = 'nav-cell nav-cell-target';
+        cells[targetIdx].innerHTML = '<span style="color: var(--success); font-size: 1.4rem;">⌖</span>';
 
         // Statek
         if (currentShipPos.x >= 0 && currentShipPos.x < size && currentShipPos.y >= 0 && currentShipPos.y < size) {
@@ -1203,6 +1208,14 @@ function initNavigationGame(stage, moduleKey, container) {
                 clearInterval(interval);
                 interval = null;
                 failRun(`KOLIZJA: SEKTOR [${getCoordLabel(currentShipPos)}] ZABLOKOWANY!`);
+                return;
+            }
+
+            // Sprawdzenie kolizji z bramą
+            if (!keyCollected && lockedGates.some(g => g.x === currentShipPos.x && g.y === currentShipPos.y)) {
+                clearInterval(interval);
+                interval = null;
+                failRun(`KOLIZJA: BRAMA [${getCoordLabel(currentShipPos)}] ZABLOKOWANA!`);
                 return;
             }
 
