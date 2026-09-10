@@ -322,13 +322,26 @@ function initOscilloscopeGame(stage, moduleKey, container) {
         ctx.stroke();
     }
 
-    // Aktualizacja wykresu w czasie rzeczywistym
-    ampSlider.addEventListener('input', drawWaves);
-    freqSlider.addEventListener('input', drawWaves);
-    phaseSlider.addEventListener('input', drawWaves);
+    // Aktualizacja wykresu z użyciem requestAnimationFrame
+    let animationFrameId;
+    let needsRedraw = true;
 
-    // Renderowanie początkowe
-    drawWaves();
+    function renderLoop() {
+        if (needsRedraw) {
+            drawWaves();
+            needsRedraw = false;
+        }
+        animationFrameId = requestAnimationFrame(renderLoop);
+    }
+    renderLoop();
+
+    ampSlider.addEventListener('input', () => { needsRedraw = true; });
+    freqSlider.addEventListener('input', () => { needsRedraw = true; });
+    phaseSlider.addEventListener('input', () => { needsRedraw = true; });
+
+    window.activeGameCleanup = () => {
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    };
 
     // Sprawdzanie warunku zwycięstwa
     checkBtn.addEventListener('click', () => {
@@ -533,7 +546,9 @@ function initTransmitterGame(moduleKey, container) {
             
             <div style="position: relative; margin-bottom: 25px;">
                 <div id="svgWrapper" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5;">
-                    <svg width="100%" height="100%"></svg>
+                    <svg width="100%" height="100%" id="flowSvg">
+                        ${Object.keys(colors).map(c => `<polyline id="path-${c}" fill="none" stroke="${colors[c]}" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 5px ${colors[c]});" points="" />`).join('')}
+                    </svg>
                 </div>
                 
                 <div id="flowGrid" style="display: grid; grid-template-columns: repeat(${cols}, ${cellSize}px); grid-template-rows: repeat(${cols}, ${cellSize}px); gap: ${gap}px; background: var(--term-bg); padding: ${padding}px; border: 2px solid var(--term-fg); position: relative; touch-action: none; transition: all 0.3s ease;">
@@ -562,23 +577,24 @@ function initTransmitterGame(moduleKey, container) {
     const checkBtn = document.getElementById('checkFlowBtn');
     const feedback = document.getElementById('flowFeedback');
 
-    // Rysuje aktualne ścieżki jako linie SVG
+    // Rysuje aktualne ścieżki modyfikując atrybuty punktów SVG
     function drawPaths() {
-        let svgHtml = `<svg width="100%" height="100%">`;
         Object.keys(paths).forEach(color => {
             const p = paths[color];
-            if (p.length > 0) {
-                let points = p.map(id => {
-                    let x = (id % cols) * (cellSize + gap) + padding + (cellSize / 2);
-                    let y = Math.floor(id / cols) * (cellSize + gap) + padding + (cellSize / 2);
-                    return `${x},${y}`;
-                }).join(' ');
-                
-                svgHtml += `<polyline points="${points}" fill="none" stroke="${colors[color]}" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 5px ${colors[color]});" />`;
+            const polyline = document.getElementById(`path-${color}`);
+            if (polyline) {
+                if (p.length > 0) {
+                    let points = p.map(id => {
+                        let x = (id % cols) * (cellSize + gap) + padding + (cellSize / 2);
+                        let y = Math.floor(id / cols) * (cellSize + gap) + padding + (cellSize / 2);
+                        return `${x},${y}`;
+                    }).join(' ');
+                    polyline.setAttribute('points', points);
+                } else {
+                    polyline.setAttribute('points', '');
+                }
             }
         });
-        svgHtml += `</svg>`;
-        svgWrapper.innerHTML = svgHtml; 
     }
 
     // Rozpoczyna nową ścieżkę od węzła-końcówki albo wznawia rysowanie od punktu na istniejącej ścieżce
@@ -657,23 +673,44 @@ function initTransmitterGame(moduleKey, container) {
         e.preventDefault();
         isMouseDown = true;
         let touch = e.touches[0];
-        let el = document.elementFromPoint(touch.clientX, touch.clientY);
-        let cell = el ? el.closest('.flow-cell') : null;
-        if (cell) handleStart(parseInt(cell.getAttribute('data-id')));
+        let rect = gridBox.getBoundingClientRect();
+        let x = touch.clientX - rect.left - padding;
+        let y = touch.clientY - rect.top - padding;
+        
+        if (x >= 0 && x <= rect.width - 2 * padding && y >= 0 && y <= rect.height - 2 * padding) {
+            let col = Math.floor(x / (cellSize + gap));
+            let row = Math.floor(y / (cellSize + gap));
+            if (col >= 0 && col < cols && row >= 0 && row < cols) {
+                handleStart(row * cols + col);
+            }
+        }
     }, { passive: false });
 
     gridBox.addEventListener('touchmove', (e) => {
         e.preventDefault();
         if (!isMouseDown) return;
         let touch = e.touches[0];
-        let el = document.elementFromPoint(touch.clientX, touch.clientY);
-        let cell = el ? el.closest('.flow-cell') : null;
-        if (cell) handleMove(parseInt(cell.getAttribute('data-id')));
+        let rect = gridBox.getBoundingClientRect();
+        let x = touch.clientX - rect.left - padding;
+        let y = touch.clientY - rect.top - padding;
+        
+        if (x >= 0 && x <= rect.width - 2 * padding && y >= 0 && y <= rect.height - 2 * padding) {
+            let col = Math.floor(x / (cellSize + gap));
+            let row = Math.floor(y / (cellSize + gap));
+            if (col >= 0 && col < cols && row >= 0 && row < cols) {
+                handleMove(row * cols + col);
+            }
+        }
     }, { passive: false });
 
     if(window.flowTouchEnd) document.removeEventListener('touchend', window.flowTouchEnd);
     window.flowTouchEnd = () => { isMouseDown = false; isDrawing = null; };
     document.addEventListener('touchend', window.flowTouchEnd);
+
+    window.activeGameCleanup = () => {
+        document.removeEventListener('mouseup', window.flowMouseUp);
+        document.removeEventListener('touchend', window.flowTouchEnd);
+    };
 
     checkBtn.addEventListener('click', () => {
         let isSolved = true;

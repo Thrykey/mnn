@@ -911,7 +911,7 @@ body.logged-in .crt-toggle-btn,
   margin: 0 !important;
   width: auto !important;
   min-height: 48px;
-  transition: all 0.2s;
+  transition: background 0.2s, color 0.2s;
   box-shadow: none !important;
 }
 .end-modal-cancel:hover {
@@ -934,7 +934,7 @@ body.logged-in .crt-toggle-btn,
   min-height: 48px;
   box-shadow: 0 0 15px rgba(255, 152, 0, 0.6) !important;
   text-shadow: none !important;
-  transition: all 0.2s;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s, border-color 0.2s;
 }
 .end-modal-confirm:hover {
   background: #ffb74d !important;
@@ -1008,9 +1008,10 @@ body.logged-in .crt-toggle-btn,
 
 
 /* =========================================================================
-   ORGANIC FLOWER & NIGHT SKY BACKGROUND
+   CSS Blossoming Flowers at Magical Night
    Original CSS Animation by Md. Usman Ansari (@MdUsmanAnsari)
    Source Code: https://codepen.io/mdusmanansari/pen/BamepLe
+   Licensed under the MIT License
    ========================================================================= */
 
 :root {
