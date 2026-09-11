@@ -135,12 +135,13 @@ function updateUI() {
 }
 
 // Podpinanie przycisków menu
+const moduleBtns = document.querySelectorAll('.module-btn');
 Object.keys(modules).forEach(key => {
     document.getElementById(`btn_${key}`).addEventListener('click', () => {
         if (key === activeModule) return; // moduł już otwarty - ignoruj kliknięcie
 
-        // Usuń klasę active ze wszystkich
-        document.querySelectorAll('.module-btn').forEach(b => b.classList.remove('active'));
+        // Usuń klasę active ze wszystkich (cached NodeList)
+        moduleBtns.forEach(b => b.classList.remove('active'));
         document.getElementById(`btn_${key}`).classList.add('active');
 
         activeModule = key;
@@ -322,22 +323,23 @@ function initOscilloscopeGame(stage, moduleKey, container) {
         ctx.stroke();
     }
 
-    // Aktualizacja wykresu z użyciem requestAnimationFrame
-    let animationFrameId;
-    let needsRedraw = true;
+    // On-demand rendering: only draw when a slider changes
+    let animationFrameId = null;
 
-    function renderLoop() {
-        if (needsRedraw) {
-            drawWaves();
-            needsRedraw = false;
+    function scheduleRedraw() {
+        if (!animationFrameId) {
+            animationFrameId = requestAnimationFrame(() => {
+                drawWaves();
+                animationFrameId = null;
+            });
         }
-        animationFrameId = requestAnimationFrame(renderLoop);
     }
-    renderLoop();
+    // Initial draw
+    drawWaves();
 
-    ampSlider.addEventListener('input', () => { needsRedraw = true; });
-    freqSlider.addEventListener('input', () => { needsRedraw = true; });
-    phaseSlider.addEventListener('input', () => { needsRedraw = true; });
+    ampSlider.addEventListener('input', scheduleRedraw);
+    freqSlider.addEventListener('input', scheduleRedraw);
+    phaseSlider.addEventListener('input', scheduleRedraw);
 
     window.activeGameCleanup = () => {
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
@@ -578,8 +580,10 @@ function initTransmitterGame(moduleKey, container) {
     const feedback = document.getElementById('flowFeedback');
 
     // Rysuje aktualne ścieżki modyfikując atrybuty punktów SVG
-    function drawPaths() {
-        Object.keys(paths).forEach(color => {
+    // When onlyColor is provided, only that polyline is updated (perf: avoids 6 needless DOM writes per mousemove)
+    function drawPaths(onlyColor) {
+        const colorsToUpdate = onlyColor ? [onlyColor] : Object.keys(paths);
+        colorsToUpdate.forEach(color => {
             const p = paths[color];
             const polyline = document.getElementById(`path-${color}`);
             if (polyline) {
@@ -603,14 +607,14 @@ function initTransmitterGame(moduleKey, container) {
         if (endpoints[id]) {
             isDrawing = endpoints[id];
             paths[isDrawing] = [id]; 
-            drawPaths();
+            drawPaths(isDrawing);
         } else {
             for (let color in paths) {
                 let idx = paths[color].indexOf(id);
                 if (idx !== -1) {
                     isDrawing = color;
                     paths[color] = paths[color].slice(0, idx + 1);
-                    drawPaths();
+                    drawPaths(isDrawing);
                     break;
                 }
             }
@@ -630,9 +634,10 @@ function initTransmitterGame(moduleKey, container) {
         if (isAdjacent) {
             if (endpoints[id] === isDrawing) {
                 if (currentPath.length > 1 || currentPath[0] !== id) {
+                    const finishedColor = isDrawing;
                     currentPath.push(id);
                     isDrawing = null; 
-                    drawPaths();
+                    drawPaths(finishedColor);
                 }
             } else if (!endpoints[id]) {
                 let occupiedBy = null;
@@ -642,10 +647,10 @@ function initTransmitterGame(moduleKey, container) {
 
                 if (occupiedBy === isDrawing) {
                     paths[isDrawing] = currentPath.slice(0, currentPath.indexOf(id) + 1);
-                    drawPaths();
+                    drawPaths(isDrawing);
                 } else if (!occupiedBy) {
                     currentPath.push(id);
-                    drawPaths();
+                    drawPaths(isDrawing);
                 }
             }
         }
@@ -1042,55 +1047,44 @@ function initNavigationGame(stage, moduleKey, container) {
     }
 
     // Rysuje stan mapy radaru
+    // Pre-build static sets for O(1) lookup instead of O(n) .some() per cell
+    const wallSet = new Set(walls.map(w => `${w.x},${w.y}`));
+    const gateSet = new Set(lockedGates.map(g => `${g.x},${g.y}`));
+
     function drawMap() {
         cells.forEach((c, idx) => {
             const x = idx % size;
             const y = Math.floor(idx / size);
-            c.className = 'nav-cell';
-            c.innerHTML = '';
+            const key = `${x},${y}`;
 
-            if (visitedCells.has(`${x},${y}`) && !(currentShipPos.x === x && currentShipPos.y === y)) {
+            // Default state
+            c.className = 'nav-cell';
+            c.textContent = '';
+
+            // Static elements (walls, key, gates, target) — use textContent where no HTML needed
+            if (wallSet.has(key)) {
+                c.className = 'nav-cell nav-cell-wall';
+                c.textContent = '✕';
+            } else if (keyPos && !keyCollected && x === keyPos.x && y === keyPos.y) {
+                c.className = 'nav-cell nav-cell-key';
+                c.textContent = '🔑';
+            } else if (!keyCollected && gateSet.has(key)) {
+                c.className = 'nav-cell nav-cell-target-locked';
+                c.textContent = '🔒';
+            } else if (x === targetPos.x && y === targetPos.y) {
+                c.className = 'nav-cell nav-cell-target';
+                c.textContent = '⌖';
+            } else if (currentShipPos.x === x && currentShipPos.y === y) {
+                c.className = 'nav-cell nav-cell-ship';
+                c.innerHTML = `<span class="nav-ship" style="transform: rotate(${shipAngle}deg);">▲</span>`;
+            } else if (visitedCells.has(key)) {
                 c.classList.add('nav-cell-trail');
             }
         });
-
-        // Przeszkody
-        walls.forEach(w => {
-            let idx = getIndex(w.x, w.y);
-            cells[idx].className = 'nav-cell nav-cell-wall';
-            cells[idx].innerHTML = '✕';
-        });
-
-        // Klucz (Etap 2)
-        if (keyPos && !keyCollected) {
-            let idx = getIndex(keyPos.x, keyPos.y);
-            cells[idx].className = 'nav-cell nav-cell-key';
-            cells[idx].innerHTML = '<span style="color: #facc15; font-size: 1.4rem;">🔑</span>';
-        }
-
-        // Zablokowane bramy
-        lockedGates.forEach(g => {
-            if (!keyCollected) {
-                let idx = getIndex(g.x, g.y);
-                cells[idx].className = 'nav-cell nav-cell-target-locked';
-                cells[idx].innerHTML = '<span class="nav-target-lock-icon" title="Brama zablokowana - pobierz klucz autoryzacyjny">🔒</span>';
-            }
-        });
-
-        // Baza / Cel
-        let targetIdx = getIndex(targetPos.x, targetPos.y);
-        cells[targetIdx].className = 'nav-cell nav-cell-target';
-        cells[targetIdx].innerHTML = '<span style="color: var(--success); font-size: 1.4rem;">⌖</span>';
-
-        // Statek
-        if (currentShipPos.x >= 0 && currentShipPos.x < size && currentShipPos.y >= 0 && currentShipPos.y < size) {
-            let shipIdx = getIndex(currentShipPos.x, currentShipPos.y);
-            cells[shipIdx].classList.add('nav-cell-ship');
-            cells[shipIdx].innerHTML = `<span class="nav-ship" style="transform: rotate(${shipAngle}deg);">▲</span>`;
-        }
     }
 
     // Odświeża sekwencję 24 slotów (6 kolumn x 4 wiersze) - brak scrollbara
+    // Full rebuild — called when commands are added/removed
     function updateSequenceDisplay() {
         if (seqCounter) {
             seqCounter.textContent = `${sequence.length} / 24`;
@@ -1109,6 +1103,21 @@ function initNavigationGame(stage, moduleKey, container) {
             }
         }
         seqDisplay.innerHTML = slotsHtml;
+    }
+
+    // Incremental update — only changes CSS classes during execution (avoids full innerHTML rebuild per tick)
+    function updateSequenceClasses() {
+        const slots = seqDisplay.children;
+        for (let i = 0; i < slots.length && i < sequence.length; i++) {
+            const slot = slots[i];
+            if (activeStepIndex === i) {
+                slot.className = 'nav-cmd-tile active';
+            } else if (activeStepIndex > i) {
+                slot.className = 'nav-cmd-tile done';
+            } else {
+                slot.className = 'nav-cmd-tile';
+            }
+        }
     }
 
     function addCommand(dir) {
@@ -1208,7 +1217,7 @@ function initNavigationGame(stage, moduleKey, container) {
                 clearInterval(interval);
                 interval = null;
                 activeStepIndex = -1;
-                updateSequenceDisplay();
+                updateSequenceClasses();
                 
                 if (currentShipPos.x === targetPos.x && currentShipPos.y === targetPos.y) {
                     if (keyCollected) {
@@ -1240,16 +1249,18 @@ function initNavigationGame(stage, moduleKey, container) {
                 return;
             }
 
-            // Sprawdzenie kolizji z przeszkodą
-            if (walls.some(w => w.x === currentShipPos.x && w.y === currentShipPos.y)) {
+            const posKey = `${currentShipPos.x},${currentShipPos.y}`;
+
+            // Sprawdzenie kolizji z przeszkodą (O(1) Set lookup)
+            if (wallSet.has(posKey)) {
                 clearInterval(interval);
                 interval = null;
                 failRun(`KOLIZJA: SEKTOR [${getCoordLabel(currentShipPos)}] ZABLOKOWANY!`);
                 return;
             }
 
-            // Sprawdzenie kolizji z bramą
-            if (!keyCollected && lockedGates.some(g => g.x === currentShipPos.x && g.y === currentShipPos.y)) {
+            // Sprawdzenie kolizji z bramą (O(1) Set lookup)
+            if (!keyCollected && gateSet.has(posKey)) {
                 clearInterval(interval);
                 interval = null;
                 failRun(`KOLIZJA: BRAMA [${getCoordLabel(currentShipPos)}] ZABLOKOWANA!`);
@@ -1261,12 +1272,12 @@ function initNavigationGame(stage, moduleKey, container) {
                 keyCollected = true;
             }
 
-            visitedCells.add(`${currentShipPos.x},${currentShipPos.y}`);
+            visitedCells.add(posKey);
             step++;
             activeStepIndex = step < sequence.length ? step : -1;
             updateHud();
             drawMap();
-            updateSequenceDisplay();
+            updateSequenceClasses();
         }, 320); 
     });
 
@@ -1336,6 +1347,10 @@ confirmEndMissionBtn.addEventListener('click', () => {
 
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById('endScreen').classList.add('active');
+
+    // Unpause the flower animations now that the end screen is visible
+    const flowerWrapper = document.querySelector('.organic-flower-wrapper');
+    if (flowerWrapper) flowerWrapper.classList.add('active');
 });
 
 // --- RĘCZNE WYŁĄCZENIE EFEKTÓW CRT ---
