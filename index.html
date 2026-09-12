@@ -32,9 +32,8 @@
            <strong>Hasło = litera z pkt 1 + liczba z pkt 5 + litera z pkt 6.</strong>
         </p>
         <input type="text" id="passwordInput" placeholder="Hasło">
-        <button id="loginBtn">AUTORYZUJ (2 PKT)</button>
-        <button id="hintUsedBtn" type="button" style="border-color: var(--danger); color: var(--danger); font-size: 0.85rem; min-height: 45px;">SKORZYSTALIŚMY Z PODPOWIEDZI (-1 PKT)</button>
-        <p id="loginError" style="color: var(--danger); font-size: 0.8rem; display: none;">Błędne hasło! Spróbuj ponownie.</p>
+        <button id="loginBtn">AUTORYZUJ</button>
+                <p id="loginError" style="color: var(--danger); font-size: 0.8rem; display: none;">Błędne hasło! Spróbuj ponownie.</p>
       </div>
     </div>
   </div>
@@ -47,8 +46,7 @@
       <div>
         <h2>HAL.OS</h2>
         <div class="status-box">Status: <span id="globalStatus" class="warning-text">AWARIA</span></div>
-        <div class="status-box">Punkty: <span id="totalPoints">2</span>/9</div>
-        <div class="status-box">Drużyna: <span id="dashTeamName">---</span></div>
+                <div class="status-box">Drużyna: <span id="dashTeamName">---</span></div>
       </div>
 
       <div class="modules-list">
@@ -91,8 +89,7 @@
       <h1>MISJA ZAKOŃCZONA</h1>
       <p class="warning-text">SYSTEMY ZABEZPIECZONE. OCZEKIWANIE NA EWAKUACJĘ.</p>
       <div class="status-box">Drużyna: <span id="endTeamName">---</span></div>
-      <div class="status-box">Zdobyte punkty: <span id="endPoints">0</span>/9</div>
-      <p style="margin-top: 20px;">KOD KOŃCOWY MISJI:</p>
+            <p style="margin-top: 20px;">KOD KOŃCOWY MISJI:</p>
       <div id="endCode" style="font-size: 3rem; letter-spacing: 4px; margin: 15px 0; color: var(--success); text-shadow: 0 0 10px var(--success);">----</div>
       <p style="font-size: 0.9rem;">Podaj ten kod prowadzącemu, aby potwierdzić zakończenie misji.</p>
       
@@ -420,7 +417,7 @@
   <div id="hostConsoleTerminal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; background: rgba(0, 5, 8, 0.98); border-bottom: 1px solid var(--term-fg); z-index: 30000; padding: 10px 20px; font-family: 'Courier New', Courier, monospace; color: var(--term-fg); box-sizing: border-box; text-transform: none;">
     <div style="max-width: 1000px; margin: 0 auto; display: flex; align-items: center; gap: 20px; font-size: 0.9rem;">
       <div style="opacity: 0.7; white-space: nowrap;">
-        [SYS_ROOT] Team: <span id="hostTeamName">---</span> | Pkt: <span id="hostTotalPoints">0</span>/9
+        [SYS_ROOT] Team: <span id="hostTeamName">---</span>
       </div>
       <div style="flex-grow: 1; display: flex; align-items: center; gap: 10px;">
         <span style="font-weight: bold; color: var(--danger);">root@hal:~$</span>

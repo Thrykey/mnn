@@ -2,7 +2,6 @@
 let currentTeam = '';
 let totalPoints = 0;
 let activeModule = null; // klucz aktualnie otwartego modułu
-let passwordHintUsed = false; // czy drużyna skorzystała z podpowiedzi do hasła (-1 pkt)
 
 // Struktura naszych nowych modułów
 const modules = {
@@ -84,23 +83,13 @@ document.getElementById('verifyTeamBtn').addEventListener('click', () => {
     }
 });
 
-document.getElementById('hintUsedBtn').addEventListener('click', () => {
-    if (passwordHintUsed) return; // zabezpieczenie przed podwójnym odliczeniem
-    passwordHintUsed = true;
-    const btn = document.getElementById('hintUsedBtn');
-    btn.textContent = 'PODPOWIEDŹ ODNOTOWANA (-1 PKT)';
-    btn.disabled = true;
-    btn.style.opacity = '0.6';
-    document.getElementById('loginBtn').textContent = 'AUTORYZUJ (1 PKT)';
-});
-
 document.getElementById('loginBtn').addEventListener('click', () => {
     const pwdInput = document.getElementById('passwordInput').value.trim().toUpperCase();
     const expectedPassword = computeEmergencyPassword(currentTeam);
 
     if (pwdInput === expectedPassword) {
         // 2 pkt standardowo, 1 pkt jeśli drużyna skorzystała z podpowiedzi
-        totalPoints += passwordHintUsed ? 1 : 2;
+        totalPoints += 2;
         updateUI();
         document.body.classList.add('logged-in');
         document.getElementById('loginScreen').classList.remove('active');
@@ -114,8 +103,6 @@ document.getElementById('loginBtn').addEventListener('click', () => {
 // --- OBSŁUGA KOKPITU ---
 // Odświeża licznik punktów, etykiety modułów i status globalny na kokpicie
 function updateUI() {
-    document.getElementById('totalPoints').textContent = totalPoints;
-    
     let allCompleted = true;
     for (const [key, mod] of Object.entries(modules)) {
         const btn = document.getElementById(`btn_${key}`);
@@ -1342,7 +1329,6 @@ confirmEndMissionBtn.addEventListener('click', () => {
     const finalCode = `${X}${L}`;
 
     document.getElementById('endTeamName').textContent = D;
-    document.getElementById('endPoints').textContent = P;
     document.getElementById('endCode').textContent = finalCode;
 
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -1399,7 +1385,6 @@ function toggleHostConsole(forceState) {
 
     if (hostConsoleOpen) {
         document.getElementById('hostTeamName').textContent = currentTeam || 'None';
-        document.getElementById('hostTotalPoints').textContent = totalPoints;
         hostCommandInput.value = '';
         hostConsoleFeedback.textContent = '';
         hostConsoleTerminal.style.display = 'block';
@@ -1418,7 +1403,6 @@ function executeHostCommand() {
         if (totalPoints > 0) {
             totalPoints--;
             updateUI();
-            document.getElementById('hostTotalPoints').textContent = totalPoints;
             hostConsoleFeedback.style.color = 'var(--success)';
             hostConsoleFeedback.textContent = "OK: -1 PKT";
         } else {
@@ -1429,7 +1413,6 @@ function executeHostCommand() {
         if (totalPoints < 9) {
             totalPoints++;
             updateUI();
-            document.getElementById('hostTotalPoints').textContent = totalPoints;
             hostConsoleFeedback.style.color = 'var(--success)';
             hostConsoleFeedback.textContent = "OK: +1 PKT";
         } else {
