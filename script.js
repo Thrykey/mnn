@@ -978,7 +978,7 @@ function initNavigationGame(stage, moduleKey, container) {
 
                 <!-- Rząd akcji -->
                 <div class="nav-actions">
-                    <button id="navExecuteBtn" class="nav-exec-btn" title="Uruchom sekwencję (Enter / Spacja)">START SEKWENCJI</button>
+                    <button id="navExecuteBtn" class="nav-exec-btn" title="Uruchom sekwencję (Enter / Spacja)">URUCHOM</button>
                     <button id="navUndoBtn" class="nav-icon-btn" title="Cofnij ostatnią komendę (Backspace)">⌫</button>
                     <button id="navClearBtn" class="nav-icon-btn danger" title="Wyczyść całą sekwencję (Delete / Escape)">✕</button>
                 </div>
@@ -1399,7 +1399,10 @@ function executeHostCommand() {
     const cmd = hostCommandInput.value.trim().toLowerCase();
     
     // Obsługa różnych komend dla elastyczności
-    if (cmd === 'sub 1' || cmd === 'rm 1' || cmd === '-1' || cmd === 'sudo sub 1') {
+    if (cmd === 'haslo') {
+        hostConsoleFeedback.style.color = 'var(--success)';
+        hostConsoleFeedback.textContent = "Hasło = litera z pkt 1 + liczba z pkt 5 + litera z pkt 6.";
+    } else if (cmd === 'sub 1' || cmd === 'rm 1' || cmd === '-1' || cmd === 'sudo sub 1') {
         if (totalPoints > 0) {
             totalPoints--;
             updateUI();
