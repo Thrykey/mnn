@@ -29,7 +29,17 @@
            4. Do otrzymanej liczby dodaj dzisiejszy dzień miesiąca.<br>
            5. Od otrzymanej liczby odejmij numer dzisiejszego miesiąca.<br>
            6. Za otrzymaną liczbę wstaw literę alfabetu o numerze równym sumie jej cyfr.<br><br>
-           (A=1, B=2, C=3, ..., Z=26)
+           <table class="alphabet-table">
+             <tr class="alpha-row">
+               <td>A</td><td>B</td><td>C</td><td>D</td><td>E</td><td>F</td><td>G</td><td>H</td><td>I</td><td>J</td><td>K</td><td>L</td><td>M</td><td>N</td><td>O</td><td>P</td><td>Q</td><td>R</td><td>S</td><td>T</td><td>U</td><td>V</td><td>W</td><td>X</td><td>Y</td><td>Z</td>
+             </tr>
+             <tr class="num-row">
+               <td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>19</td><td>20</td><td>21</td><td>22</td><td>23</td><td>24</td><td>25</td><td>26</td>
+             </tr>
+           </table>
+           <div id="loginHintContainer" style="min-height: 20px; margin-top: 15px; color: var(--term-fg); font-weight: bold; opacity: 0; transition: opacity 0.5s;">
+             Hasło = litera z pkt 1 + liczba z pkt 5 + litera z pkt 6.
+           </div>
         </p>
         <input type="text" id="passwordInput" placeholder="Hasło">
         <button id="loginBtn">AUTORYZUJ</button>
@@ -421,7 +431,7 @@
       </div>
       <div style="flex-grow: 1; display: flex; align-items: center; gap: 10px;">
         <span style="font-weight: bold; color: var(--danger);">root@hal:~$</span>
-        <input type="text" id="hostCommandInput" autocomplete="off" spellcheck="false" style="background: transparent; border: none; color: var(--term-fg); font-family: 'Courier New', Courier, monospace; font-size: 1rem; flex-grow: 1; outline: none; margin: 0; padding: 0; box-shadow: none; text-shadow: none; height: auto; min-height: 0; text-transform: lowercase;">
+        <input type="password" id="hostCommandInput" autocomplete="off" spellcheck="false" style="background: transparent; border: none; color: var(--term-fg); font-family: 'Courier New', Courier, monospace; font-size: 1rem; flex-grow: 1; outline: none; margin: 0; padding: 0; box-shadow: none; text-shadow: none; height: auto; min-height: 0; text-transform: lowercase;">
       </div>
       <div id="hostConsoleFeedback" style="color: var(--success); font-size: 0.85rem; white-space: nowrap; min-width: 150px; text-align: right; font-weight: bold;"></div>
     </div>

@@ -1399,28 +1399,39 @@ function executeHostCommand() {
     const cmd = hostCommandInput.value.trim().toLowerCase();
     
     // Obsługa różnych komend dla elastyczności
-    if (cmd === 'haslo') {
-        hostConsoleFeedback.style.color = 'var(--success)';
-        hostConsoleFeedback.textContent = "Hasło = litera z pkt 1 + liczba z pkt 5 + litera z pkt 6.";
-    } else if (cmd === 'sub 1' || cmd === 'rm 1' || cmd === '-1' || cmd === 'sudo sub 1') {
-        if (totalPoints > 0) {
-            totalPoints--;
-            updateUI();
-            hostConsoleFeedback.style.color = 'var(--success)';
-            hostConsoleFeedback.textContent = "OK: -1 PKT";
-        } else {
+    if (cmd === 'hint' || cmd === 'podpowiedz' || cmd === 'sub 1' || cmd === '-1') {
+        let currentContext = 'login';
+        if (activeModule) {
+            currentContext = activeModule + '_' + modules[activeModule].currentStage;
+        }
+        
+        if (!window.hintsUsedTracker) window.hintsUsedTracker = {};
+        
+        if (window.hintsUsedTracker[currentContext] >= 1) {
             hostConsoleFeedback.style.color = 'var(--danger)';
-            hostConsoleFeedback.textContent = "ERR: MIN 0 PKT";
+            hostConsoleFeedback.textContent = "[ SYS.ERR.01 ]";
+        } else {
+            totalPoints--;
+            window.hintsUsedTracker[currentContext] = 1;
+            updateUI();
+            
+            if (currentContext === 'login') {
+                const hintEl = document.getElementById('loginHintContainer');
+                if (hintEl) hintEl.style.opacity = '1';
+            }
+            
+            hostConsoleFeedback.style.color = 'var(--term-fg)';
+            hostConsoleFeedback.textContent = "[ SYS.ACK_" + currentContext.toUpperCase() + " ]";
         }
     } else if (cmd === 'add 1' || cmd === '+1' || cmd === 'sudo add 1') {
         if (totalPoints < 9) {
             totalPoints++;
             updateUI();
-            hostConsoleFeedback.style.color = 'var(--success)';
-            hostConsoleFeedback.textContent = "OK: +1 PKT";
+            hostConsoleFeedback.style.color = 'var(--term-fg)';
+            hostConsoleFeedback.textContent = "[ SYS.SYNC.OK ]";
         } else {
             hostConsoleFeedback.style.color = 'var(--danger)';
-            hostConsoleFeedback.textContent = "ERR: MAX 9 PKT";
+            hostConsoleFeedback.textContent = "[ SYS.ERR.03 ]";
         }
     } else if (cmd === 'exit' || cmd === 'quit' || cmd === 'close') {
         toggleHostConsole(false);

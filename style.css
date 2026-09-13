@@ -1918,3 +1918,25 @@ body.logged-in .crt-toggle-btn,
 .end-modal-confirm {
   text-shadow: 0 0 4px rgba(30, 231, 255, 0.4);
 }
+
+.alphabet-table {
+  width: 100%;
+  table-layout: fixed;
+  margin-top: 15px;
+  border-collapse: collapse;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--term-fg);
+  background: rgba(0, 26, 42, 0.4);
+}
+.alphabet-table td {
+  border-right: 1px solid rgba(30, 231, 255, 0.4);
+  padding: 6px 0;
+}
+.alphabet-table td:last-child {
+  border-right: none;
+}
+.alphabet-table .alpha-row td {
+  border-bottom: 1px solid var(--term-fg);
+  font-weight: bold;
+}
