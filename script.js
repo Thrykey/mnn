@@ -460,12 +460,53 @@ function initPipesGame(moduleKey, container) {
     });
 
     checkBtn.addEventListener('click', () => {
-        let isSolved = true;
-        for (let cell of grid) {
-            if (cell.target !== -1) {
-                if (cell.t === 'line' && (cell.r % 2 !== cell.target % 2)) isSolved = false;
-                else if (cell.t === 'corner' && cell.r !== cell.target) isSolved = false;
+        // Trace actual pipe connectivity from [O2 IN] to [OUT]
+        // sides: 0=top, 1=right, 2=bottom, 3=left
+        const cols = 5;
+        function getConnections(cell) {
+            if (cell.t === 'line') {
+                return cell.r % 2 === 0 ? [1, 3] : [0, 2]; // horizontal or vertical
+            } else { // corner
+                return [[1, 2], [2, 3], [3, 0], [0, 1]][cell.r];
             }
+        }
+        function getNeighbor(id, side) {
+            const row = Math.floor(id / cols);
+            const col = id % cols;
+            if (side === 0) return row > 0 ? id - cols : -1;
+            if (side === 1) return col < cols - 1 ? id + 1 : -1;
+            if (side === 2) return row < 4 ? id + cols : -1;
+            if (side === 3) return col > 0 ? id - 1 : -1;
+            return -1;
+        }
+
+        // Trace from entry (entering cell 0 from the left) to exit (leaving cell 24 to the right)
+        let currentId = 0;
+        let enterSide = 3; // entering from left
+        const visited = new Set();
+        const tracedPath = [];
+        let isSolved = false;
+
+        while (true) {
+            if (visited.has(currentId)) break; // loop detected
+            visited.add(currentId);
+            tracedPath.push(currentId);
+
+            const connections = getConnections(grid[currentId]);
+            if (!connections.includes(enterSide)) break; // pipe doesn't connect to where we came from
+
+            // Exit through the other connected side
+            const exitSide = connections[0] === enterSide ? connections[1] : connections[0];
+
+            // Check if we've reached cell 24 exiting to the right
+            if (currentId === 24 && exitSide === 1) { isSolved = true; break; }
+
+            // Move to neighbor
+            const neighborId = getNeighbor(currentId, exitSide);
+            if (neighborId === -1) break; // went off grid
+
+            currentId = neighborId;
+            enterSide = (exitSide + 2) % 4; // enter neighbor from opposite side
         }
 
         if (isSolved) {
@@ -473,10 +514,11 @@ function initPipesGame(moduleKey, container) {
             feedback.textContent = "PRZEPŁYW USTABILIZOWANY.";
             checkBtn.disabled = true;
 
-            // Podświetl tylko komórki na trasie (target !== -1), pomijając ślepe zaułki
+            // Podświetl komórki na znalezionej trasie
+            const pathSet = new Set(tracedPath);
             document.querySelectorAll('.pipe-cell').forEach(cellEl => {
                 const cellId = parseInt(cellEl.getAttribute('data-id'));
-                if (grid[cellId].target !== -1) {
+                if (pathSet.has(cellId)) {
                     cellEl.style.background = 'rgba(34, 197, 94, 0.25)';
                     cellEl.style.boxShadow = '0 0 12px rgba(34, 197, 94, 0.6)';
                     cellEl.querySelectorAll('rect').forEach(rect => rect.setAttribute('fill', 'var(--success)'));
