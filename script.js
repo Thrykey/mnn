@@ -215,7 +215,7 @@ window.winStage = function(moduleKey) {
 function initOscilloscopeGame(stage, moduleKey, container) {
     container.innerHTML = `
         <div style="text-align: center; width: 100%;">
-            <canvas id="oscCanvas" width="500" height="250" style="background: #001018; border: 2px solid var(--term-fg); border-radius: 8px; margin-bottom: 10px; box-shadow: inset 0 0 15px rgba(30, 231, 255, 0.1); width: 100%; max-width: 500px;"></canvas>
+            <canvas id="oscCanvas" width="500" height="250" style="background: #160033; border: 2px solid var(--term-fg); border-radius: 8px; margin-bottom: 10px; box-shadow: inset 0 0 15px rgba(223, 128, 255, 0.1); width: 100%; max-width: 500px;"></canvas>
             
             <div style="display: flex; justify-content: center; gap: 30px; margin-bottom: 15px; font-size: 0.85rem; font-weight: bold;">
                 <span style="color: rgba(255, 68, 68, 0.8);">■ USZKODZONY SYGNAŁ</span>
@@ -271,7 +271,7 @@ function initOscilloscopeGame(stage, moduleKey, container) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         // Rysowanie siatki "monitora CRT"
-        ctx.strokeStyle = 'rgba(30, 231, 255, 0.2)';
+        ctx.strokeStyle = 'rgba(223, 128, 255, 0.2)';
         ctx.lineWidth = 1;
         for(let i=0; i<500; i+=25) {
             ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 250); ctx.stroke();
@@ -281,7 +281,7 @@ function initOscilloscopeGame(stage, moduleKey, container) {
         }
         
         // Linia środkowa
-        ctx.strokeStyle = 'rgba(30, 231, 255, 0.4)';
+        ctx.strokeStyle = 'rgba(223, 128, 255, 0.4)';
         ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(0, 125); ctx.lineTo(500, 125); ctx.stroke();
 
@@ -811,7 +811,7 @@ function initMemoryCoreGame(moduleKey, container) {
 
     // Generowanie HTML dla wszystkich sektorów z jawnymi cyframami
     for(let i = 0; i < totalCells; i++) {
-        html += `<div class="core-cell" data-id="${i}" style="border: 1px solid rgba(30, 231, 255, 0.3); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold; color: var(--term-fg); transition: all 0.3s ease;">${cellTargets[i]}</div>`;
+        html += `<div class="core-cell" data-id="${i}" style="border: 1px solid rgba(223, 128, 255, 0.3); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold; color: var(--term-fg); transition: all 0.3s ease;">${cellTargets[i]}</div>`;
     }
 
     html += `</div>`; 
