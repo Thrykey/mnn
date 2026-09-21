@@ -555,7 +555,7 @@ function initTransmitterGame(moduleKey, container) {
         'green': '#22c55e',
         'yellow': '#ffeb3b',
         'orange': '#ff9800',
-        'magenta': '#ffffff',
+        'magenta': '#ffb3e6',
         'cyan': '#009ec5'     
     };
 
