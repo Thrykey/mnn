@@ -185,7 +185,7 @@ function loadGame(moduleKey) {
     }
     else if (moduleKey === 'core') {
         setInstr(`<strong>CEL:</strong> Zautoryzuj klastry pamięci.<br><br>
-        Cyfra wewnątrz sektora oznacza, <strong>ile z jej 4 narożników (węzłów)</strong> musi zostać zasilonych. <br><br>Klikaj w węzły na rogach, aby je aktywować. Kiedy wartość się zgadza, sektor zaświeci się na zielono.`);
+        Cyfra wewnątrz sektora oznacza, <strong>ile z jej 4 narożników (węzłów)</strong> musi zostać zasilonych. <br><br>Klikaj w węzły na rogach, aby je aktywować. Kiedy wartość się zgadza, sektor zaświeci się na turkusowo.`);
         initMemoryCoreGame(moduleKey, container);
     }
 }
@@ -348,8 +348,8 @@ function initOscilloscopeGame(stage, moduleKey, container) {
             feedback.textContent = "SYNCHRONIZACJA ZAKOŃCZONA SUKCESEM!";
             checkBtn.disabled = true;
             
-            // Lekkie mignięcie wygranego canvasu na zielono dla super efektu
-            canvas.style.boxShadow = "inset 0 0 30px rgba(34, 197, 94, 0.5)";
+            // Lekkie mignięcie wygranego canvasu na turkusowo dla super efektu
+            canvas.style.boxShadow = "inset 0 0 30px rgba(0, 158, 197, 0.5)";
             
             setTimeout(() => {
                 winStage(moduleKey);
@@ -421,7 +421,7 @@ function initPipesGame(moduleKey, container) {
                 <div id="pipesGrid" style="display: grid; grid-template-columns: repeat(5, 55px); grid-template-rows: repeat(5, 55px); gap: 4px; background: var(--term-dim); padding: 10px; border: 2px solid var(--term-fg); box-shadow: inset 0 0 20px rgba(30,231,255,0.1);">
                     ${grid.map((cell, index) => {
                         let bg = '#000';
-                        if (index === 0 || index === 24) bg = 'rgba(34, 197, 94, 0.15)'; // Start i meta na zielono
+                        if (index === 0 || index === 24) bg = 'rgba(0, 158, 197, 0.15)'; // Start i meta na turkusowo
                         return `
                         <div class="pipe-cell" data-id="${cell.id}" style="width: 100%; height: 100%; background: ${bg}; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: transform 0.2s ease; transform: rotate(${cell.r * 90}deg); border-radius: 4px;">
                             ${svgs[cell.t]}
@@ -519,8 +519,8 @@ function initPipesGame(moduleKey, container) {
             document.querySelectorAll('.pipe-cell').forEach(cellEl => {
                 const cellId = parseInt(cellEl.getAttribute('data-id'));
                 if (pathSet.has(cellId)) {
-                    cellEl.style.background = 'rgba(34, 197, 94, 0.25)';
-                    cellEl.style.boxShadow = '0 0 12px rgba(34, 197, 94, 0.6)';
+                    cellEl.style.background = 'rgba(0, 158, 197, 0.25)';
+                    cellEl.style.boxShadow = '0 0 12px rgba(0, 158, 197, 0.6)';
                     cellEl.querySelectorAll('rect').forEach(rect => rect.setAttribute('fill', 'var(--success)'));
                 }
             });
@@ -550,13 +550,13 @@ function initTransmitterGame(moduleKey, container) {
     };
 
     const colors = {
-        'red': 'var(--danger)',
+        'red': '#ff0000',
         'blue': '#2962ff',           
-        'green': 'var(--success)',
+        'green': '#22c55e',
         'yellow': '#ffeb3b',
         'orange': '#ff9800',
-        'magenta': '#e040fb',
-        'cyan': 'var(--term-fg)'     
+        'magenta': '#ffffff',
+        'cyan': '#009ec5'     
     };
 
     const symbols = {
@@ -758,7 +758,7 @@ function initTransmitterGame(moduleKey, container) {
             feedback.style.color = 'var(--success)';
             feedback.textContent = "SYNCHRONIZACJA ZAKOŃCZONA SUKCESEM.";
             checkBtn.disabled = true;
-            gridBox.style.boxShadow = "0 0 30px rgba(34, 197, 94, 0.5)";
+            gridBox.style.boxShadow = "0 0 30px rgba(0, 158, 197, 0.5)";
             gridBox.style.borderColor = "var(--success)";
             setTimeout(() => winStage(moduleKey), 2000);
         } else {
@@ -854,7 +854,7 @@ function initMemoryCoreGame(moduleKey, container) {
             if (currentSum === cellTargets[i]) {
                 cell.style.color = 'var(--success)';
                 cell.style.textShadow = '0 0 10px var(--success)';
-                cell.style.background = 'rgba(34, 197, 94, 0.1)'; // Delikatne podświetlenie tła
+                cell.style.background = 'rgba(0, 158, 197, 0.1)'; // Delikatne podświetlenie tła
             } else if (currentSum > cellTargets[i]) {
                 cell.style.color = 'var(--danger)';
                 cell.style.textShadow = '0 0 10px var(--danger)';
@@ -909,7 +909,7 @@ function initMemoryCoreGame(moduleKey, container) {
             feedback.style.color = 'var(--success)';
             feedback.textContent = "KLASTRY PAMIĘCI ZAUTORYZOWANE.";
             checkBtn.disabled = true;
-            document.getElementById('coreCellsGrid').style.boxShadow = "0 0 30px rgba(34, 197, 94, 0.5)";
+            document.getElementById('coreCellsGrid').style.boxShadow = "0 0 30px rgba(0, 158, 197, 0.5)";
             document.getElementById('coreCellsGrid').style.borderColor = "var(--success)";
             setTimeout(() => winStage(moduleKey), 2000);
         } else {
