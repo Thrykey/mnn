@@ -1,15 +1,15 @@
 :root {
   /* --- GŁÓWNE KOLORY --- */
-  --term-bg: #0b0114;      /* Tło: bardzo ciemny granat/czerń */
-  --term-fg: #df80ff;      /* Główny kolor: jasny fiolet */
-  --term-dim: #1f0533;     /* Tło paneli: ciemny, zgaszony fiolet */
+  --term-bg: #0e071c;      /* Tło: bardzo ciemny granat/czerń */
+  --term-fg: #b393ff;      /* Główny kolor: jasny fiolet */
+  --term-dim: #21143b;     /* Tło paneli: ciemny, zgaszony fiolet */
   
   /* Chromatic aberration (lekkie przesunięcie RGB) + poświata */
   --term-glow: 
     1px 0 1px rgba(255, 0, 0, 0.5), 
     -1px 0 1px rgba(0, 255, 255, 0.5), 
-    0 0 4px rgba(223, 128, 255, 0.6), 
-    0 0 10px rgba(223, 128, 255, 0.3);
+    0 0 4px rgba(179, 147, 255, 0.6), 
+    0 0 10px rgba(179, 147, 255, 0.3);
   
   /* --- KOLORY POMOCNICZE --- */
   --danger: #ff4444;       /* Czerwony dla błędów i wylogowania */
@@ -115,7 +115,7 @@ body::after {
   padding: 2rem;
   width: 750px;
   text-align: center;
-  box-shadow: inset 0 0 20px rgba(223, 128, 255, 0.1);
+  box-shadow: inset 0 0 20px rgba(179, 147, 255, 0.1);
 }
 
 .warning-text { 
@@ -145,7 +145,7 @@ input {
 }
 input:focus {
   outline: none;
-  background: #330a59;
+  background: #2f1d52;
 }
 
 /* Ukrycie strzałek w polu typu number */
@@ -231,7 +231,7 @@ button:hover {
 
 .module-btn.active { 
   background: var(--term-dim); 
-  box-shadow: inset 0 0 15px rgba(223, 128, 255, 0.3); /* Dodatkowa wewnętrzna poświata zamiast pogrubiania ramki */
+  box-shadow: inset 0 0 15px rgba(179, 147, 255, 0.3); /* Dodatkowa wewnętrzna poświata zamiast pogrubiania ramki */
 }
 .module-btn.completed { 
   border-color: var(--term-fg); 
@@ -380,7 +380,7 @@ button:hover {
   width: 62px;
   height: 62px;
   background: var(--term-dim);
-  border: 1px solid rgba(223, 128, 255, 0.25);
+  border: 1px solid rgba(179, 147, 255, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -504,18 +504,18 @@ button:hover {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background: rgba(31, 5, 51, 0.4);
-  border: 1px solid rgba(223, 128, 255, 0.4);
+  background: rgba(33, 20, 59, 0.4);
+  border: 1px solid rgba(179, 147, 255, 0.4);
   padding: 14px 16px;
   box-sizing: border-box;
-  box-shadow: inset 0 0 20px rgba(223, 128, 255, 0.08);
+  box-shadow: inset 0 0 20px rgba(179, 147, 255, 0.08);
 }
 
 .nav-hud-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px dashed rgba(223, 128, 255, 0.35);
+  border-bottom: 1px dashed rgba(179, 147, 255, 0.35);
   padding-bottom: 10px;
   margin-bottom: 10px;
   font-size: 0.78rem;
@@ -558,7 +558,7 @@ button:hover {
 .nav-seq-display {
   width: 100%;
   height: 142px;
-  background: #07000f;
+  background: #0a0514;
   border: 1px dashed var(--term-fg);
   padding: 6px;
   box-sizing: border-box;
@@ -580,7 +580,7 @@ button:hover {
   align-items: center;
   justify-content: center;
   font-size: 0.95rem;
-  box-shadow: inset 0 0 6px rgba(223, 128, 255, 0.2);
+  box-shadow: inset 0 0 6px rgba(179, 147, 255, 0.2);
   transition: all 0.15s ease;
 }
 
@@ -595,16 +595,16 @@ button:hover {
 
 .nav-cmd-tile.done {
   opacity: 0.3;
-  border-color: #546;
-  color: #879;
-  background: #130026;
+  border-color: #556;
+  color: #889;
+  background: #180e2b;
 }
 
 .nav-cmd-slot-empty {
   box-sizing: border-box;
-  border: 1px dashed rgba(223, 128, 255, 0.15);
+  border: 1px dashed rgba(179, 147, 255, 0.15);
   background: transparent;
-  color: rgba(223, 128, 255, 0.2);
+  color: rgba(179, 147, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -797,7 +797,7 @@ button:hover {
   right: 187px;
   transform: translateX(50%);
   z-index: 10000;
-  background: rgba(11, 1, 20, 0.8) !important;
+  background: rgba(14, 7, 28, 0.8) !important;
   border: 1px solid var(--term-fg) !important;
   color: var(--term-fg) !important;
   font-size: 0.75rem !important;
@@ -1916,7 +1916,7 @@ body.logged-in .crt-toggle-btn,
 #endScreen button,
 .end-modal-cancel,
 .end-modal-confirm {
-  text-shadow: 0 0 4px rgba(223, 128, 255, 0.4);
+  text-shadow: 0 0 4px rgba(179, 147, 255, 0.4);
 }
 
 .alphabet-table {
@@ -1927,10 +1927,10 @@ body.logged-in .crt-toggle-btn,
   text-align: center;
   font-size: 0.85rem;
   color: var(--term-fg);
-  background: rgba(31, 5, 51, 0.4);
+  background: rgba(33, 20, 59, 0.4);
 }
 .alphabet-table td {
-  border-right: 1px solid rgba(223, 128, 255, 0.4);
+  border-right: 1px solid rgba(179, 147, 255, 0.4);
   padding: 6px 0;
 }
 .alphabet-table td:last-child {
