@@ -287,6 +287,8 @@ button:hover {
   background: transparent;
   border: var(--border);
   padding: 15px;
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 .instructions-area h3 { 
   color: var(--term-bg); 
@@ -300,6 +302,34 @@ button:hover {
   font-size: 1rem; 
   line-height: 1.6; 
   margin-top: 15px; 
+}
+.flavor-text {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px dashed var(--term-fg);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  font-style: italic;
+  text-transform: none;
+  opacity: 0.9;
+}
+.flavor-header {
+  font-weight: bold;
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  opacity: 1;
+}
+.instructions-area::-webkit-scrollbar {
+  width: 6px;
+}
+.instructions-area::-webkit-scrollbar-track {
+  background: rgba(14, 7, 28, 0.6);
+}
+.instructions-area::-webkit-scrollbar-thumb {
+  background: var(--term-fg);
+  border-radius: 3px;
 }
 
 /* --- NAWIGACJA (AUTOPILOT) - NOWY UKŁAD DWUPANELOWY --- */
@@ -884,6 +914,7 @@ body.logged-in .crt-toggle-btn,
 .disable-crt .terminal-render,
 .disable-crt .warning-text,
 .disable-crt .idle-logo,
+.disable-crt .flavor-text,
 .disable-crt .nav-cell-target,
 .disable-crt .nav-cell-target-locked,
 .disable-crt .nav-target-lock-icon,

@@ -5,11 +5,41 @@ let activeModule = null; // klucz aktualnie otwartego modułu
 
 // Struktura naszych nowych modułów
 const modules = {
-    nav:  { name: 'Nawigacja', stages: 2, currentStage: 1, points: 0 },
-    eng:  { name: 'Silniki', stages: 2, currentStage: 1, points: 0 },
-    life: { name: 'Wentylacja', stages: 1, currentStage: 1, points: 0 },
-    core: { name: 'Rdzeń Pamięci', stages: 1, currentStage: 1, points: 0 },
-    comm: { name: 'Nadajnik', stages: 1, currentStage: 1, points: 0 }
+    nav:  { 
+        name: 'Nawigacja', 
+        stages: 2, 
+        currentStage: 1, 
+        points: 0,
+        flavor: 'Czujniki pozycji zaczęły driftować i autopilot przestał działać. Musicie ręcznie wyznaczyć kurs powrotny do Krakowa, krok po kroku, tak żeby statek bezpiecznie dotarł tam gdzie trzeba.'
+    },
+    eng:  { 
+        name: 'Silniki', 
+        stages: 2, 
+        currentStage: 1, 
+        points: 0,
+        flavor: 'Kwiat jest bardzo delikatny, więc surowy impuls napędowy silników mógłby go uszkodzić. Trzeba go precyzyjnie dostroić, żeby start był łagodny i roślina przetrwała podróż.'
+    },
+    life: { 
+        name: 'Wentylacja', 
+        stages: 1, 
+        currentStage: 1, 
+        points: 0,
+        flavor: 'Komora, w której przechowywany jest Kwiat, wymaga specjalnie dobranego stężenia tlenu. Musicie poprowadzić do niej nową trasę rurociągu, żeby dotarło tam odpowiednie powietrze.'
+    },
+    core: { 
+        name: 'Rdzeń Pamięci', 
+        stages: 1, 
+        currentStage: 1, 
+        points: 0,
+        flavor: 'Promieniowanie rozsynchronizowało sektory pamięci. Trzeba je ponownie skalibrować, żeby odzyskać dostęp do dokładnych parametrów, jakich Kwiat potrzebuje do przeżycia.'
+    },
+    comm: { 
+        name: 'Nadajnik', 
+        stages: 1, 
+        currentStage: 1, 
+        points: 0,
+        flavor: 'Promieniowanie wprowadziło szum między czujnikami a odbiornikami. Musicie sparować je ręcznie, a przy tak silnych zakłóceniach ścieżki nie mogą się przecinać, bo wywołałoby to zbyt duży szum i sygnał by się urwał.'
+    }
 };
 
 // --- POMOCNICZE: LITERY ALFABETU I SUMA CYFR ---
@@ -150,7 +180,8 @@ function loadGame(moduleKey) {
     
     // Funkcja pomocnicza do ustawiania instrukcji z efektem renderowania CRT
     const setInstr = (html) => {
-        instr.innerHTML = `<div class="terminal-render">${html}</div>`;
+        const flavorHtml = mod.flavor ? `<div class="flavor-text"><div class="flavor-header">// RAPORT SYTUACYJNY:</div>${mod.flavor}</div>` : '';
+        instr.innerHTML = `<div class="terminal-render">${html}${flavorHtml}</div>`;
     };
 
     document.getElementById('gameTitle').textContent = `Naprawa: ${mod.name} (Poziom ${mod.currentStage}/${mod.stages})`;
@@ -163,28 +194,28 @@ function loadGame(moduleKey) {
 
     // Dynamiczne intruckje dla poszczególnych mini-gierek
     if (moduleKey === 'nav') {
-        setInstr(`<strong>CEL:</strong> Zaprogramuj trasę lotu.<br><br>
+        setInstr(`<strong>// PROCEDURA NAPRAWCZA:</strong><br> Zaprogramuj trasę lotu.<br><br>
         Wprowadź sekwencję komend napędowych (strzałek), aby ominąć przeszkody <strong>[✕]</strong> i zadokować w bazie <strong>[⌖]</strong>.<br><br>
         <em>Poziom 2: Zbierz klucz autoryzacyjny <strong>[🔑]</strong>, aby odblokować bazę <strong>[🔒 ➔ ⌖]</strong> przed dokowaniem.</em>`);
         initNavigationGame(mod.currentStage, moduleKey, container);
     }
     else if (moduleKey === 'eng') {
-        setInstr(`<strong>CEL:</strong> Zsynchronizuj rdzeń silnika.<br><br>
+        setInstr(`<strong>// PROCEDURA NAPRAWCZA:</strong><br> Skalibruj napęd silnika.<br><br>
         Użyj suwaków, aby precyzyjnie nałożyć Twój sygnał na uszkodzony strumień mocy.`);
         initOscilloscopeGame(mod.currentStage, moduleKey, container);
     } 
     else if (moduleKey === 'life') {
-        setInstr(`<strong>CEL:</strong> Przywróć zasilanie tlenu.<br><br>
+        setInstr(`<strong>// PROCEDURA NAPRAWCZA:</strong><br> Przywróć zasilanie tlenu.<br><br>
         Klikaj w wybrane segmenty rurociągu, aby je obrócić. Musisz utworzyć nieprzerwany strumień pomiędzy zaworem wejściowym <strong>[O2 IN]</strong>, a strefą załogi <strong>[OUT]</strong>. Ślepe zaułki nie mają znaczenia.`);
         initPipesGame(moduleKey, container);
     }
     else if (moduleKey === 'comm') {
-        setInstr(`<strong>CEL:</strong> Połącz przewody nadajnika.<br><br>
+        setInstr(`<strong>// PROCEDURA NAPRAWCZA:</strong<br> Połącz przewody nadajnika.<br><br>
         Połącz ze sobą świecące węzły tego samego koloru, przeciągając po ekranie. Ścieżki danych <strong>nie mogą się przecinać</strong>, a każdy węzeł musi zostać podłączony do swojej pary.`);
         initTransmitterGame(moduleKey, container);
     }
     else if (moduleKey === 'core') {
-        setInstr(`<strong>CEL:</strong> Zautoryzuj klastry pamięci.<br><br>
+        setInstr(`<strong>// PROCEDURA NAPRAWCZA:</strong><br> Zautoryzuj klastry pamięci.<br><br>
         Cyfra wewnątrz sektora oznacza, <strong>ile z jej 4 narożników (węzłów)</strong> musi zostać zasilonych. <br><br>Klikaj w węzły na rogach, aby je aktywować. Kiedy wartość się zgadza, sektor zaświeci się na turkusowo.`);
         initMemoryCoreGame(moduleKey, container);
     }
@@ -285,7 +316,7 @@ function initOscilloscopeGame(stage, moduleKey, container) {
         ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(0, 125); ctx.lineTo(500, 125); ctx.stroke();
 
-        // 1. FALA DOCELOWA (Zepsuty silnik) - Czerwona
+        // 1. FALA DO CELOWA (Zepsuty silnik) - Czerwona
         ctx.strokeStyle = 'rgba(255, 68, 68, 0.6)';
         ctx.lineWidth = 4;
         ctx.beginPath();
