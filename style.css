@@ -109,13 +109,78 @@ body::after {
   justify-content: center;
   align-items: center;
 }
+#loginScreen {
+  position: relative;
+}
 .login-panel {
   background: transparent;
   border: var(--border);
   padding: 2rem;
-  width: 750px;
+  width: 700px;
+  max-width: 95vw;
+  max-height: 95vh;
+  overflow-y: auto;
+  box-sizing: border-box;
   text-align: center;
   box-shadow: inset 0 0 20px rgba(179, 147, 255, 0.1);
+}
+.login-panel::-webkit-scrollbar {
+  width: 6px;
+}
+.login-panel::-webkit-scrollbar-track {
+  background: rgba(14, 7, 28, 0.6);
+}
+.login-panel::-webkit-scrollbar-thumb {
+  background: var(--term-fg);
+  border-radius: 3px;
+}
+
+.login-side-box {
+  position: absolute;
+  left: calc(50% + 370px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 290px;
+  height: auto;
+  max-height: 80vh;
+  box-sizing: border-box;
+  z-index: 10;
+}
+.login-lore-content {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  font-style: italic;
+  text-transform: none;
+  opacity: 0.9;
+  margin-top: 10px;
+}
+
+@media (max-width: 1350px) {
+  #loginScreen.active {
+    flex-direction: column;
+    overflow-y: auto;
+    align-items: center;
+    gap: 20px;
+    padding: 30px 15px;
+  }
+  .login-panel {
+    width: 100%;
+    max-width: 700px;
+  }
+  .login-side-box {
+    position: static;
+    transform: none;
+    width: 100%;
+    max-width: 700px;
+    height: auto;
+    margin-top: 20px;
+  }
+  .crt-toggle-btn {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    bottom: 15px;
+  }
 }
 
 .warning-text { 
@@ -824,7 +889,7 @@ button:hover {
 .crt-toggle-btn {
   position: fixed;
   bottom: 35px;
-  right: 187px;
+  right: 170px;
   transform: translateX(50%);
   z-index: 10000;
   background: rgba(14, 7, 28, 0.8) !important;
@@ -915,6 +980,7 @@ body.logged-in .crt-toggle-btn,
 .disable-crt .warning-text,
 .disable-crt .idle-logo,
 .disable-crt .flavor-text,
+.disable-crt .login-lore-content,
 .disable-crt .nav-cell-target,
 .disable-crt .nav-cell-target-locked,
 .disable-crt .nav-target-lock-icon,

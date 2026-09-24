@@ -210,7 +210,7 @@ function loadGame(moduleKey) {
         initPipesGame(moduleKey, container);
     }
     else if (moduleKey === 'comm') {
-        setInstr(`<strong>// PROCEDURA NAPRAWCZA:</strong<br> Połącz przewody nadajnika.<br><br>
+        setInstr(`<strong>// PROCEDURA NAPRAWCZA:</strong><br> Połącz przewody nadajnika.<br><br>
         Połącz ze sobą świecące węzły tego samego koloru, przeciągając po ekranie. Ścieżki danych <strong>nie mogą się przecinać</strong>, a każdy węzeł musi zostać podłączony do swojej pary.`);
         initTransmitterGame(moduleKey, container);
     }
