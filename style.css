@@ -136,19 +136,17 @@ body::after {
 }
 
 /* --- LOGIN & END SCREEN --- */
+#introScreen,
 #loginScreen,
 #endScreen {
   justify-content: center;
   align-items: center;
 }
-#loginScreen {
-  position: relative;
-}
 .login-panel {
   background: transparent;
   border: var(--border);
   padding: 2rem;
-  width: 700px;
+  width: 750px;
   max-width: 95vw;
   max-height: 95vh;
   overflow-y: auto;
@@ -167,52 +165,20 @@ body::after {
   border-radius: 3px;
 }
 
-.login-side-box {
-  position: absolute;
-  left: calc(50% + 370px);
-  top: 50%;
-  transform: translateY(-50%);
-  width: 290px;
-  height: auto;
-  max-height: 80vh;
-  box-sizing: border-box;
-  z-index: 10;
+.intro-box {
+  margin: 20px 0;
+  padding: 16px 20px;
+  border: 1px dashed var(--term-fg);
+  background: rgba(33, 20, 59, 0.35);
+  text-align: left;
 }
-.login-lore-content {
-  font-size: 0.88rem;
-  line-height: 1.55;
+.intro-flavor {
   font-style: italic;
   text-transform: none;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0;
   opacity: 0.9;
-  margin-top: 10px;
-}
-
-@media (max-width: 1350px) {
-  #loginScreen.active {
-    flex-direction: column;
-    overflow-y: auto;
-    align-items: center;
-    gap: 20px;
-    padding: 30px 15px;
-  }
-  .login-panel {
-    width: 100%;
-    max-width: 700px;
-  }
-  .login-side-box {
-    position: static;
-    transform: none;
-    width: 100%;
-    max-width: 700px;
-    height: auto;
-    margin-top: 20px;
-  }
-  .crt-toggle-btn {
-    left: 50% !important;
-    right: auto !important;
-    transform: translateX(-50%) !important;
-    bottom: 15px;
-  }
 }
 
 .warning-text { 
@@ -1012,7 +978,7 @@ body.logged-in .crt-toggle-btn,
 .disable-crt .warning-text,
 .disable-crt .idle-logo,
 .disable-crt .flavor-text,
-.disable-crt .login-lore-content,
+.disable-crt .intro-flavor,
 .disable-crt .nav-cell-target,
 .disable-crt .nav-cell-target-locked,
 .disable-crt .nav-target-lock-icon,

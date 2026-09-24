@@ -81,6 +81,19 @@ function computeEmergencyPassword(teamNumberStr) {
     return `${letterStart}${N}${letterEnd}`;
 }
 
+// --- EKRAN WSTĘPNY (ODPRAWA MISJI) ---
+const proceedBtn = document.getElementById('proceedBtn');
+if (proceedBtn) {
+    proceedBtn.addEventListener('click', () => {
+        document.getElementById('introScreen').classList.remove('active');
+        const loginScreen = document.getElementById('loginScreen');
+        loginScreen.classList.add('active');
+        loginScreen.classList.remove('terminal-render');
+        void loginScreen.offsetWidth;
+        loginScreen.classList.add('terminal-render');
+    });
+}
+
 // --- LOGOWANIE ---
 const teamInputElem = document.getElementById('teamInput');
 
