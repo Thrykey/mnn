@@ -1149,8 +1149,13 @@ function initNavigationGame(stage, moduleKey, container) {
                 c.className = 'nav-cell nav-cell-target-locked';
                 c.textContent = '🔒';
             } else if (x === targetPos.x && y === targetPos.y) {
-                c.className = 'nav-cell nav-cell-target';
-                c.textContent = '⌖';
+                if (currentShipPos.x === x && currentShipPos.y === y) {
+                    c.className = 'nav-cell nav-cell-docked';
+                    c.innerHTML = `<span class="nav-ship" style="transform: rotate(${shipAngle}deg);">▲</span>`;
+                } else {
+                    c.className = 'nav-cell nav-cell-target';
+                    c.textContent = '⌖';
+                }
             } else if (currentShipPos.x === x && currentShipPos.y === y) {
                 c.className = 'nav-cell nav-cell-ship';
                 c.innerHTML = `<span class="nav-ship" style="transform: rotate(${shipAngle}deg);">▲</span>`;
@@ -1295,20 +1300,7 @@ function initNavigationGame(stage, moduleKey, container) {
                 interval = null;
                 activeStepIndex = -1;
                 updateSequenceClasses();
-                
-                if (currentShipPos.x === targetPos.x && currentShipPos.y === targetPos.y) {
-                    if (keyCollected) {
-                        feedback.style.color = 'var(--success)';
-                        feedback.textContent = "DOKOWANIE ZAKOŃCZONE SUKCESEM.";
-                        navGrid.classList.add('success-flash');
-                        window.removeEventListener('keydown', handleKeyDown);
-                        setTimeout(() => winStage(moduleKey), 1800);
-                    } else {
-                        failRun("BŁĄD: BRAK KLUCZA AUTORYZACYJNEGO PRZED DOKOWANIEM!");
-                    }
-                } else {
-                    failRun("BŁĄD: NIE OSIĄGNIĘTO BAZY DOKUJĄCEJ!");
-                }
+                failRun("BŁĄD: NIE OSIĄGNIĘTO BAZY DOKUJĄCEJ!");
                 return;
             }
 
@@ -1355,6 +1347,24 @@ function initNavigationGame(stage, moduleKey, container) {
             updateHud();
             drawMap();
             updateSequenceClasses();
+
+            // Sprawdzenie osiągnięcia bazy dokującej (natychmiastowe zwycięstwo)
+            if (currentShipPos.x === targetPos.x && currentShipPos.y === targetPos.y) {
+                clearInterval(interval);
+                interval = null;
+                activeStepIndex = -1;
+                updateSequenceClasses();
+                if (keyCollected) {
+                    feedback.style.color = 'var(--success)';
+                    feedback.textContent = "DOKOWANIE ZAKOŃCZONE SUKCESEM.";
+                    navGrid.classList.add('success-flash');
+                    window.removeEventListener('keydown', handleKeyDown);
+                    setTimeout(() => winStage(moduleKey), 1800);
+                } else {
+                    failRun("BŁĄD: BRAK KLUCZA AUTORYZACYJNEGO PRZED DOKOWANIEM!");
+                }
+                return;
+            }
         }, 320); 
     });
 

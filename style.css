@@ -478,7 +478,69 @@ button:hover {
 }
 
 .nav-grid.success-flash {
-  box-shadow: 0 0 35px rgba(0, 212, 170, 0.7);
+  box-shadow: 0 0 35px rgba(0, 158, 197, 0.7);
+  animation: gridSuccessPulse 1.2s ease-in-out 3;
+}
+
+@keyframes gridSuccessPulse {
+  0%, 100% { box-shadow: 0 0 25px rgba(0, 158, 197, 0.5); }
+  50% { box-shadow: 0 0 50px rgba(0, 158, 197, 0.9), inset 0 0 20px rgba(0, 158, 197, 0.15); }
+}
+
+/* Komórka po zadokowaniu: statek NA celu z efektem lock-on */
+.nav-cell-docked {
+  background: rgba(0, 158, 197, 0.2) !important;
+  border-color: var(--success) !important;
+  box-shadow:
+    inset 0 0 18px rgba(0, 158, 197, 0.5),
+    0 0 12px rgba(0, 158, 197, 0.4) !important;
+  animation: dockedLockOn 0.8s ease-in-out 3;
+}
+
+.nav-cell-docked .nav-ship {
+  color: var(--success) !important;
+  text-shadow: 0 0 14px var(--success), 0 0 28px #ffffff !important;
+  animation: dockedShipPulse 1s ease-in-out infinite;
+}
+
+@keyframes dockedLockOn {
+  0%, 100% {
+    box-shadow: inset 0 0 18px rgba(0, 158, 197, 0.5), 0 0 12px rgba(0, 158, 197, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: inset 0 0 30px rgba(0, 158, 197, 0.8), 0 0 25px rgba(0, 158, 197, 0.7);
+    transform: scale(1.05);
+  }
+}
+
+@keyframes dockedShipPulse {
+  0%, 100% { text-shadow: 0 0 14px var(--success), 0 0 28px #ffffff; }
+  50% { text-shadow: 0 0 20px var(--success), 0 0 40px #ffffff, 0 0 60px var(--success); }
+}
+
+/* Typewriter dla komunikatu dokowania */
+.nav-typewriter {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid var(--success);
+  animation: navTypewriter 1.8s steps(32, end) forwards, navBlinkCaret 0.6s step-end infinite;
+  width: 0;
+  color: var(--success);
+  font-size: 0.85rem;
+  letter-spacing: 1.5px;
+  text-shadow: 0 0 8px var(--success);
+}
+
+@keyframes navTypewriter {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes navBlinkCaret {
+  0%, 100% { border-color: var(--success); }
+  50% { border-color: transparent; }
 }
 
 .nav-cell {
@@ -514,14 +576,14 @@ button:hover {
 
 .nav-cell-target {
   border-color: var(--success) !important;
-  box-shadow: inset 0 0 12px rgba(0, 212, 170, 0.35);
+  box-shadow: inset 0 0 12px rgba(0, 158, 197, 0.35);
   animation: targetPulse 1.8s infinite;
   will-change: box-shadow, border-color;
 }
 
 @keyframes targetPulse {
-  0%, 100% { border-color: var(--success); box-shadow: inset 0 0 10px rgba(0, 212, 170, 0.3); }
-  50% { border-color: #33e5c8; box-shadow: inset 0 0 20px rgba(0, 212, 170, 0.6); }
+  0%, 100% { border-color: var(--success); box-shadow: inset 0 0 10px rgba(0, 158, 197, 0.3); }
+  50% { border-color: #38bdf8; box-shadow: inset 0 0 20px rgba(0, 158, 197, 0.6); }
 }
 
 .nav-cell-target-locked {
@@ -993,6 +1055,7 @@ body.logged-in .crt-toggle-btn,
 .disable-crt .intro-flavor,
 .disable-crt .nav-cell-target,
 .disable-crt .nav-cell-target-locked,
+.disable-crt .nav-cell-docked,
 .disable-crt .nav-target-lock-icon,
 .disable-crt .nav-cell-key {
   animation: none !important;
@@ -1030,6 +1093,7 @@ body.logged-in .crt-toggle-btn,
   .idle-logo,
   .nav-cell-target,
   .nav-cell-target-locked,
+  .nav-cell-docked,
   .nav-target-lock-icon,
   .nav-cell-key {
     animation: none !important;
