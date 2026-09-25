@@ -311,6 +311,18 @@ button:hover {
   background: var(--danger);
   color: var(--term-bg);
 }
+.end-btn.ready { 
+  border-color: #00e676; 
+  color: #00e676; 
+  text-shadow: 0 0 8px rgba(0, 230, 118, 0.6);
+  box-shadow: 0 0 10px rgba(0, 230, 118, 0.2);
+}
+.end-btn.ready:hover {
+  background: #00e676;
+  color: var(--term-bg);
+  box-shadow: 0 0 15px rgba(0, 230, 118, 0.5);
+  text-shadow: none;
+}
 
 /* Game Area */
 .game-area {

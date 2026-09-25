@@ -10,7 +10,7 @@ const modules = {
         stages: 2, 
         currentStage: 1, 
         points: 0,
-        flavor: 'Czujniki pozycji zaczęły driftować i autopilot przestał działać. Musicie ręcznie wyznaczyć kurs powrotny do Krakowa, krok po kroku, tak żeby statek bezpiecznie dotarł tam gdzie trzeba.'
+        flavor: 'Czujniki pozycji zaczęły wariować i autopilot przestał działać. Musicie ręcznie wyznaczyć kurs powrotny do Krakowa, krok po kroku, tak żeby statek bezpiecznie dotarł tam gdzie trzeba.'
     },
     eng:  { 
         name: 'Silniki', 
@@ -158,9 +158,13 @@ function updateUI() {
         }
     }
 
+    const endBtn = document.getElementById('endMissionBtn');
     if (allCompleted) {
         document.getElementById('globalStatus').textContent = 'STABILNY';
         document.getElementById('globalStatus').style.color = 'var(--success)';
+        if (endBtn) endBtn.classList.add('ready');
+    } else {
+        if (endBtn) endBtn.classList.remove('ready');
     }
 }
 
@@ -219,7 +223,7 @@ function loadGame(moduleKey) {
     } 
     else if (moduleKey === 'life') {
         setInstr(`<strong>// PROCEDURA NAPRAWCZA:</strong><br> Przywróć zasilanie tlenu.<br><br>
-        Klikaj w wybrane segmenty rurociągu, aby je obrócić. Musisz utworzyć nieprzerwany strumień pomiędzy zaworem wejściowym <strong>[O2 IN]</strong>, a strefą załogi <strong>[OUT]</strong>. Ślepe zaułki nie mają znaczenia.`);
+        Klikaj w wybrane segmenty rurociągu, aby je obrócić. Musisz utworzyć nieprzerwany strumień pomiędzy zaworem wejściowym <strong>[O2 IN]</strong>, a komorą kwiatu <strong>[OUT]</strong>. Ślepe zaułki nie mają znaczenia.`);
         initPipesGame(moduleKey, container);
     }
     else if (moduleKey === 'comm') {
@@ -475,7 +479,7 @@ function initPipesGame(moduleKey, container) {
 
                 <!-- Wskaźnik WYJŚCIA precyzyjnie wyrównany z 5. rzędem siatki -->
                 <div style="display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 12px; box-sizing: border-box;">
-                    <div style="height: 55px; display: flex; align-items: center; justify-content: flex-start; color: var(--success); font-weight: bold; font-size: 1.15rem; text-shadow: 0 0 8px var(--success); white-space: nowrap;">
+                    <div title="Komora Kwiatu" style="height: 55px; display: flex; align-items: center; justify-content: flex-start; color: var(--success); font-weight: bold; font-size: 1.15rem; text-shadow: 0 0 8px var(--success); white-space: nowrap;">
                         &#10142; [OUT]
                     </div>
                 </div>
