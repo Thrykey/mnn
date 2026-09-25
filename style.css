@@ -489,27 +489,49 @@ button:hover {
 
 /* Komórka po zadokowaniu: statek NA celu z efektem lock-on */
 .nav-cell-docked {
-  background: rgba(0, 158, 197, 0.2) !important;
+  position: relative;
+  background: rgba(0, 158, 197, 0.25) !important;
   border-color: var(--success) !important;
   box-shadow:
-    inset 0 0 18px rgba(0, 158, 197, 0.5),
-    0 0 12px rgba(0, 158, 197, 0.4) !important;
+    inset 0 0 18px rgba(0, 158, 197, 0.6),
+    0 0 12px rgba(0, 158, 197, 0.5) !important;
   animation: dockedLockOn 0.8s ease-in-out 3;
 }
 
+.nav-cell-docked::before {
+  content: "⌖";
+  position: absolute;
+  font-size: 2.2rem;
+  color: var(--success);
+  opacity: 0.55;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: dockedTargetSpin 8s linear infinite;
+  text-shadow: 0 0 8px var(--success);
+}
+
 .nav-cell-docked .nav-ship {
-  color: var(--success) !important;
+  position: relative;
+  z-index: 2;
+  color: #ffffff !important;
   text-shadow: 0 0 14px var(--success), 0 0 28px #ffffff !important;
   animation: dockedShipPulse 1s ease-in-out infinite;
 }
 
+@keyframes dockedTargetSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 @keyframes dockedLockOn {
   0%, 100% {
-    box-shadow: inset 0 0 18px rgba(0, 158, 197, 0.5), 0 0 12px rgba(0, 158, 197, 0.4);
+    box-shadow: inset 0 0 18px rgba(0, 158, 197, 0.6), 0 0 12px rgba(0, 158, 197, 0.5);
     transform: scale(1);
   }
   50% {
-    box-shadow: inset 0 0 30px rgba(0, 158, 197, 0.8), 0 0 25px rgba(0, 158, 197, 0.7);
+    box-shadow: inset 0 0 30px rgba(0, 158, 197, 0.85), 0 0 25px rgba(0, 158, 197, 0.75);
     transform: scale(1.05);
   }
 }
@@ -1056,6 +1078,7 @@ body.logged-in .crt-toggle-btn,
 .disable-crt .nav-cell-target,
 .disable-crt .nav-cell-target-locked,
 .disable-crt .nav-cell-docked,
+.disable-crt .nav-cell-docked::before,
 .disable-crt .nav-target-lock-icon,
 .disable-crt .nav-cell-key {
   animation: none !important;
@@ -1094,6 +1117,7 @@ body.logged-in .crt-toggle-btn,
   .nav-cell-target,
   .nav-cell-target-locked,
   .nav-cell-docked,
+  .nav-cell-docked::before,
   .nav-target-lock-icon,
   .nav-cell-key {
     animation: none !important;

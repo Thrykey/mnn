@@ -1356,10 +1356,10 @@ function initNavigationGame(stage, moduleKey, container) {
                 updateSequenceClasses();
                 if (keyCollected) {
                     feedback.style.color = 'var(--success)';
-                    feedback.textContent = "DOKOWANIE ZAKOŃCZONE SUKCESEM.";
+                    feedback.innerHTML = '<span class="nav-typewriter">DOKOWANIE ZAKOŃCZONE SUKCESEM.</span>';
                     navGrid.classList.add('success-flash');
                     window.removeEventListener('keydown', handleKeyDown);
-                    setTimeout(() => winStage(moduleKey), 1800);
+                    setTimeout(() => winStage(moduleKey), 2000);
                 } else {
                     failRun("BŁĄD: BRAK KLUCZA AUTORYZACYJNEGO PRZED DOKOWANIEM!");
                 }
